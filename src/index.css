@@ -1,0 +1,241 @@
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color: #111;
+  background-color: #f9fafb; /* light gray/white */
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  background-color: #ffffff;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  text-align: center;
+  z-index: 100;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #2563eb; /* Blue primary brand color */
+  letter-spacing: -0.05em;
+  margin: 0;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.card {
+  background: #ffffff;
+  padding: 3rem;
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+  max-width: 600px;
+  width: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
+h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  color: #1f2937;
+}
+
+p {
+  font-size: 1.125rem;
+  color: #4b5563;
+  margin-bottom: 2rem;
+}
+
+.btn-primary {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 1rem 2.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+}
+
+.mt-4 {
+  margin-top: 1.5rem;
+}
+
+.game-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+}
+
+.stats-bar {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  background: #ffffff;
+  padding: 1rem 2rem;
+  border-radius: 16px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.stat {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.stat span {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #2563eb;
+  margin-left: 0.5rem;
+}
+
+.instruction-box {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #10b981; /* Green */
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.final-score {
+  font-size: 1.5rem;
+  color: #4b5563;
+  margin: 2rem 0;
+}
+
+.huge-number {
+  font-size: 6rem;
+  font-weight: 900;
+  color: #2563eb;
+  line-height: 1;
+  display: block;
+  margin: 1rem 0;
+}
+
+/* Camera Detector */
+.camera-container {
+  position: relative;
+  width: 640px;
+  height: 480px;
+  background: #e5e7eb;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.camera-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.camera-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  z-index: 10;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255,255,255,0.8);
+  font-weight: 600;
+  z-index: 20;
+  color: #374151;
+}
+
+@media (max-width: 768px) {
+  .camera-container {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4/3;
+  }
+}
+
+.countdown-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 10rem;
+  font-weight: 900;
+  color: white;
+  text-shadow: 0 8px 30px rgba(0,0,0,0.8);
+  background: rgba(0,0,0,0.4);
+  z-index: 30;
+  border-radius: 24px;
+  animation: popIn 1s infinite;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  20% { transform: scale(1); opacity: 1; }
+  80% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.2); opacity: 0; }
+}
