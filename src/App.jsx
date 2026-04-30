@@ -13,8 +13,9 @@ import { check67Gesture } from './gameLogic';
 import './index.css';
 
 function App() {
-  const [screen, setScreen] = useState('START'); // START, CALIBRATION, COUNTDOWN, PLAYING, NAME_INPUT, RESULT
+  const [screen, setScreen] = useState('START');
   const [score, setScore] = useState(0);
+  const [calibrationCount, setCalibrationCount] = useState(0);
   const [timeLeft, setTimeLeft] = useState(15);
   const [countdownTime, setCountdownTime] = useState(3);
   const [showStartText, setShowStartText] = useState(false);
@@ -25,7 +26,7 @@ function App() {
   const [showCertificate, setShowCertificate] = useState(false);
   const MAX_LEADERBOARD_ENTRIES = 5;
   const photoCapturedRef = useRef(false);
-  const cameraVideoRef = useRef(null);
+  const calibrationRef = useRef(0);
   
   // Refs to avoid re-renders on every frame
   const lastGestureRef = useRef('neutral');
@@ -84,14 +85,22 @@ function App() {
   // 2. Przejście po zakończeniu COUNTDOWN
   useEffect(() => {
     if (screen === 'COUNTDOWN' && countdownTime === 0) {
+      // Reset ALL refs directly — useEffect sync is async and too late
       setScore(0);
+      scoreRef.current = 0;
       setTimeLeft(15);
       setCombo(0);
       comboRef.current = 0;
       pendingScoreRef.current = 0;
+      lastEffectTimeRef.current = 0;
+      lastScoreTimeRef.current = 0;
+      lastGestureRef.current = 'neutral';
+      // Reset photo for new game
+      setPhotoDataUrl(null);
+      photoCapturedRef.current = false;
       setScreen('PLAYING');
       setShowStartText(true);
-      setTimeout(() => setShowStartText(false), 1000); // Pokaż napis START! przez 1 sek.
+      setTimeout(() => setShowStartText(false), 1000);
     }
   }, [countdownTime, screen]);
 
@@ -206,9 +215,10 @@ function App() {
     ) {
       // Gesture detected!
       if (screenRef.current === 'CALIBRATION') {
-        const newScore = scoreRef.current + 1;
-        setScore(newScore);
-        if (newScore >= 5) {
+        const newCal = calibrationRef.current + 1;
+        calibrationRef.current = newCal;
+        setCalibrationCount(newCal);
+        if (newCal >= 5) {
           setCountdownTime(3);
           setScreen('COUNTDOWN');
         }
@@ -240,11 +250,20 @@ function App() {
   };
 
   const restartGame = () => {
+    // CRITICAL: Block pose processing FIRST
+    screenRef.current = 'START';
+    
+    // Reset all values
+    scoreRef.current = 0;
+    calibrationRef.current = 0;
     setScore(0);
+    setCalibrationCount(0);
     setTimeLeft(15);
     setCombo(0);
     comboRef.current = 0;
     pendingScoreRef.current = 0;
+    lastEffectTimeRef.current = 0;
+    lastScoreTimeRef.current = 0;
     lastGestureRef.current = 'neutral';
     lastLeftWristRef.current = null;
     lastRightWristRef.current = null;
@@ -318,7 +337,7 @@ function App() {
             <div className="stats-bar">
               {screen === 'CALIBRATION' ? (
                 <div className="instruction-box">
-                  Zrób 5 próbnych wymachów! (Zrobiono: {score}/5)
+                  Zrób 5 próbnych wymachów! (Zrobiono: {calibrationCount}/5)
                 </div>
               ) : screen === 'COUNTDOWN' ? (
                 <div className="instruction-box" style={{color: '#f59e0b'}}>

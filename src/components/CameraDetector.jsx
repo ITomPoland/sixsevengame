@@ -7,6 +7,10 @@ export default function CameraDetector({ onPoseUpdate }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const poseLandmarkerRef = useRef(null);
   const requestRef = useRef(null);
+  // Smoothed positions for stable circle rendering (EMA)
+  const smoothLeftRef = useRef({ x: 0.5, y: 0.5 });
+  const smoothRightRef = useRef({ x: 0.5, y: 0.5 });
+  const SMOOTH = 0.4; // 0=frozen, 1=no smoothing
 
   useEffect(() => {
     let active = true;
@@ -98,19 +102,33 @@ export default function CameraDetector({ onPoseUpdate }) {
       leftWrist = landmarks[15]; // lewy nadgarstek
       rightWrist = landmarks[16]; // prawy nadgarstek
 
-      // Rysowanie nadgarstkow
-      ctx.fillStyle = "#ff0055"; // Lewy na czerwono
+      // Smoothed wrist drawing — EMA for stability
       if (leftWrist && leftWrist.visibility > 0.4) {
+        smoothLeftRef.current.x += (leftWrist.x - smoothLeftRef.current.x) * SMOOTH;
+        smoothLeftRef.current.y += (leftWrist.y - smoothLeftRef.current.y) * SMOOTH;
+        const sx = smoothLeftRef.current.x * canvas.width;
+        const sy = smoothLeftRef.current.y * canvas.height;
+        ctx.fillStyle = '#ff0055';
+        ctx.shadowColor = '#ff0055';
+        ctx.shadowBlur = 12;
         ctx.beginPath();
-        ctx.arc(leftWrist.x * canvas.width, leftWrist.y * canvas.height, 15, 0, 2 * Math.PI);
+        ctx.arc(sx, sy, 15, 0, 2 * Math.PI);
         ctx.fill();
+        ctx.shadowBlur = 0;
       }
       
-      ctx.fillStyle = "#0055ff"; // Prawy na niebiesko
       if (rightWrist && rightWrist.visibility > 0.4) {
+        smoothRightRef.current.x += (rightWrist.x - smoothRightRef.current.x) * SMOOTH;
+        smoothRightRef.current.y += (rightWrist.y - smoothRightRef.current.y) * SMOOTH;
+        const sx = smoothRightRef.current.x * canvas.width;
+        const sy = smoothRightRef.current.y * canvas.height;
+        ctx.fillStyle = '#0055ff';
+        ctx.shadowColor = '#0055ff';
+        ctx.shadowBlur = 12;
         ctx.beginPath();
-        ctx.arc(rightWrist.x * canvas.width, rightWrist.y * canvas.height, 15, 0, 2 * Math.PI);
+        ctx.arc(sx, sy, 15, 0, 2 * Math.PI);
         ctx.fill();
+        ctx.shadowBlur = 0;
       }
       
       // Rysowanie polaczenia miedzy nadgarstkami
