@@ -11,6 +11,8 @@ import Certificate from './components/Certificate';
 import ProgressBar, { getRank } from './components/ProgressBar';
 import { check67Gesture } from './gameLogic';
 import './index.css';
+import { database } from './firebase';
+import { ref as dbRef, onValue, push, set, serverTimestamp } from 'firebase/database';
 
 function App() {
   const [screen, setScreen] = useState('START');
@@ -24,6 +26,8 @@ function App() {
   const [photoDataUrl, setPhotoDataUrl] = useState(null);
   const [playerName, setPlayerName] = useState('');
   const [showCertificate, setShowCertificate] = useState(false);
+  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState(null);
+  const [isLoadingSession, setIsLoadingSession] = useState(false);
   const MAX_LEADERBOARD_ENTRIES = 5;
   const photoCapturedRef = useRef(false);
   const calibrationRef = useRef(0);
@@ -53,35 +57,41 @@ function App() {
   // Load leaderboard on mount and check URL for QR certificate
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    
     if (params.has('cert') && params.has('score')) {
       const paramName = params.get('cert');
       const paramScore = parseInt(params.get('score'), 10) || 0;
       setPlayerName(paramName);
       setScore(paramScore);
       
-      // Check for photo in URL hash
-      if (window.location.hash && window.location.hash.startsWith('#photo=')) {
-        try {
-          const encodedPhoto = window.location.hash.substring(7); // remove '#photo='
-          setPhotoDataUrl(decodeURIComponent(encodedPhoto));
-        } catch (e) {
-          console.error("Failed to decode photo from URL", e);
-        }
+      if (params.has('img')) {
+        setPhotoDataUrl(decodeURIComponent(params.get('img')));
       }
       
       setShowCertificate(true);
-      // Clean up the URL so if they refresh or play, it doesn't keep showing the cert
       window.history.replaceState({}, document.title, window.location.pathname);
-    }
+    } 
 
-    const saved = localStorage.getItem('sixseven_leaderboard');
-    if (saved) {
-      try {
-        setLeaderboard(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse leaderboard", e);
+    // Subskrypcja na żywo do globalnego rankingu Firebase Realtime Database
+    const leaderboardRef = dbRef(database, 'leaderboard');
+    const unsubscribe = onValue(leaderboardRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // Konwertuj obiekt na tablicę, posortuj po wyniku malejąco i weź top 5
+        const topScores = Object.keys(data).map(key => ({
+          id: key,
+          ...data[key]
+        }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, MAX_LEADERBOARD_ENTRIES);
+        
+        setLeaderboard(topScores);
+      } else {
+        setLeaderboard([]);
       }
-    }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Sync refs with state
@@ -259,16 +269,43 @@ function App() {
     }
   };
 
-  const handleNameSubmit = (name) => {
+  const handleNameSubmit = async (name) => {
     setPlayerName(name);
-    const newEntry = { name, score };
-    const newLeaderboard = [...leaderboard, newEntry]
-      .sort((a, b) => b.score - a.score)
-      .slice(0, MAX_LEADERBOARD_ENTRIES);
+    setScreen('RESULT'); // Pokazujemy rezultat od razu, w tle leci upload
+    
+    try {
+      let photoUrl = null;
       
-    setLeaderboard(newLeaderboard);
-    localStorage.setItem('sixseven_leaderboard', JSON.stringify(newLeaderboard));
-    setScreen('RESULT');
+      // 1. Upload zdjecia na ImgBB
+      if (photoDataUrl) {
+        const apiKey = '63cb7cc9fa62b857682bd8c2f1ee18b3';
+        const formData = new FormData();
+        const base64Data = photoDataUrl.split(',')[1];
+        formData.append('image', base64Data);
+        
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          photoUrl = data.data.url;
+          setUploadedPhotoUrl(photoUrl);
+        }
+      }
+      
+      // 2. Zapisujemy do globalnego rankingu (Realtime Database)
+      const newScoreRef = push(dbRef(database, 'leaderboard'));
+      await set(newScoreRef, {
+        name,
+        score,
+        timestamp: serverTimestamp()
+      });
+      
+    } catch (e) {
+      console.error("Blad przy zapisie wyniku lub uploadzie zdjecia:", e);
+    }
   };
 
   const restartGame = () => {
@@ -470,6 +507,7 @@ function App() {
             name={playerName || 'GRACZ'}
             score={score}
             photoDataUrl={photoDataUrl}
+            uploadedPhotoUrl={uploadedPhotoUrl}
             onClose={() => setShowCertificate(false)}
           />
         )}

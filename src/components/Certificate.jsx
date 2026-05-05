@@ -3,7 +3,7 @@ import { jsPDF } from 'jspdf';
 import { QRCodeSVG } from 'qrcode.react';
 import { getRank } from './ProgressBar';
 
-const Certificate = ({ name, score, photoDataUrl, onClose }) => {
+const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) => {
   const canvasRef = useRef(null);
   const [certDataUrl, setCertDataUrl] = useState(null);
   const [qrUrl, setQrUrl] = useState('');
@@ -94,9 +94,14 @@ const Certificate = ({ name, score, photoDataUrl, onClose }) => {
     ctx.lineWidth = 4;
     ctx.strokeRect(photoX, photoY, photoW, photoH);
 
-    // Draw photo if available
+    // Draw photo if available (from base64 or ImgBB URL)
     if (photoDataUrl) {
       const img = new Image();
+      // Obejście problemów CORS na płótnie, gdy obraz jest ładowany z obcego URL
+      if (photoDataUrl.startsWith('http')) {
+        img.crossOrigin = "anonymous";
+      }
+      
       img.onload = () => {
         ctx.save();
         ctx.beginPath();
@@ -110,16 +115,27 @@ const Certificate = ({ name, score, photoDataUrl, onClose }) => {
         ctx.restore();
         finishDraw(ctx, W, H);
       };
+      
+      img.onerror = () => {
+        // Jeśli obraz zawiedzie (np. blokada CORS w niektórych przeglądarkach), rysujemy ikonę
+        drawFallbackCamera(ctx, photoX, photoY, photoW, photoH);
+        finishDraw(ctx, W, H);
+      };
+      
       img.src = photoDataUrl;
     } else {
-      ctx.fillStyle = '#e5e7eb';
-      ctx.fillRect(photoX + 4, photoY + 4, photoW - 8, photoH - 8);
-      ctx.fillStyle = '#111111';
-      ctx.font = 'bold 20px "Space Grotesk", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('📷', photoX + photoW / 2, photoY + photoH / 2 + 8);
+      drawFallbackCamera(ctx, photoX, photoY, photoW, photoH);
       finishDraw(ctx, W, H);
     }
+  };
+
+  const drawFallbackCamera = (ctx, photoX, photoY, photoW, photoH) => {
+    ctx.fillStyle = '#e5e7eb';
+    ctx.fillRect(photoX + 4, photoY + 4, photoW - 8, photoH - 8);
+    ctx.fillStyle = '#111111';
+    ctx.font = 'bold 20px "Space Grotesk", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('📷', photoX + photoW / 2, photoY + photoH / 2 + 8);
   };
 
   const finishDraw = (ctx, W, H) => {
@@ -222,31 +238,19 @@ const Certificate = ({ name, score, photoDataUrl, onClose }) => {
     const dataUrl = canvasRef.current.toDataURL('image/png');
     setCertDataUrl(dataUrl);
 
-    // Generate QR URL (compact — just name, score, rank for re-rendering)
+    // Generate QR URL with short ImgBB link
     try {
       const host = window.location.host;
       const protocol = window.location.protocol;
-      let certUrl = `${protocol}//${host}/?cert=${encodeURIComponent(name)}&score=${score}`;
-
-      if (photoDataUrl) {
-        const img = new Image();
-        img.onload = () => {
-          const thumbCanvas = document.createElement('canvas');
-          thumbCanvas.width = 100;
-          thumbCanvas.height = 75;
-          const thumbCtx = thumbCanvas.getContext('2d');
-          thumbCtx.drawImage(img, 0, 0, 100, 75);
-          // Compress heavily for QR code capacity
-          const miniPhoto = thumbCanvas.toDataURL('image/jpeg', 0.3);
-          certUrl += `#photo=${encodeURIComponent(miniPhoto)}`;
-          setQrUrl(certUrl);
-        };
-        img.src = photoDataUrl;
-      } else {
-        setQrUrl(certUrl);
+      
+      let finalUrl = `${protocol}//${host}/?cert=${encodeURIComponent(name)}&score=${score}`;
+      if (uploadedPhotoUrl) {
+        finalUrl += `&img=${encodeURIComponent(uploadedPhotoUrl)}`;
       }
+      
+      setQrUrl(finalUrl);
     } catch {
-      setQrUrl(`67 GAME - ${name} - ${score} pkt - ${rank}`);
+      setQrUrl(`67 GAME - ${name} - ${score} pkt`);
     }
   };
 
