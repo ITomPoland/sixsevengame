@@ -50,8 +50,19 @@ function App() {
   const lastScoreTimeRef = useRef(0);
   const comboTimeoutRef = useRef(null);
 
-  // Load leaderboard on mount
+  // Load leaderboard on mount and check URL for QR certificate
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('cert') && params.has('score')) {
+      const paramName = params.get('cert');
+      const paramScore = parseInt(params.get('score'), 10) || 0;
+      setPlayerName(paramName);
+      setScore(paramScore);
+      setShowCertificate(true);
+      // Clean up the URL so if they refresh or play, it doesn't keep showing the cert
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     const saved = localStorage.getItem('sixseven_leaderboard');
     if (saved) {
       try {
@@ -279,7 +290,7 @@ function App() {
   const isGameplay = screen === 'CALIBRATION' || screen === 'COUNTDOWN' || screen === 'PLAYING';
 
   return (
-    <div className={`app-container ${isFireMode ? 'fire-mode' : ''} ${isWarmGlow ? 'glow-warm' : ''}`}>
+    <div className={`app-container ${isFireMode ? 'fire-mode' : ''} ${isWarmGlow ? 'glow-warm' : ''} ${isGameplay ? 'is-gameplay' : ''}`}>
       <div className="marquee-container">
         <div className="marquee-content">
           <div className="marquee-track">
@@ -364,6 +375,7 @@ function App() {
             
             <div 
               ref={cameraWrapperRef}
+              className="camera-wrapper"
               style={{ position: 'relative', width: '100%', maxWidth: '640px', overflow: 'visible' }}
             >
               

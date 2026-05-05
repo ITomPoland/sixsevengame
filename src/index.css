@@ -18,7 +18,7 @@ body {
   background-color: var(--neo-bg);
   color: var(--neo-black);
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
   /* Techniczny dot grid na tle */
   background-image: radial-gradient(var(--neo-black) 1px, transparent 1px);
   background-size: 24px 24px;
@@ -79,7 +79,7 @@ body {
   flex-direction: column;
   min-height: 100vh;
   transition: background-color 0.5s ease;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .app-container.fire-mode {
@@ -1035,4 +1035,197 @@ p {
 
 .fire-mode .progress-lb-target {
   color: var(--neo-yellow);
+}
+
+/* ============================
+   IS-GAMEPLAY NO SCROLL MODE
+   ============================ */
+
+.app-container.is-gameplay {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.is-gameplay .main-content {
+  padding: 0.5rem 1rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.is-gameplay .game-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 900px;
+}
+
+.is-gameplay .camera-wrapper {
+  width: 100%;
+  /* Take remaining space but don't force flex basis to 0 */
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 0; /* allows shrinking */
+}
+
+.is-gameplay .camera-inner {
+  /* This needs to shrink with the wrapper */
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.is-gameplay .camera-container {
+  /* Auto width and height bounded by aspect ratio and max 100% */
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: 100%;
+  aspect-ratio: 4/3;
+  border-radius: 24px;
+}
+
+/* ============================
+   RESPONSIVE DESIGN / FLUID
+   ============================ */
+
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 2.5rem;
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+  }
+  
+  .glow-text {
+    font-size: 1.8rem;
+  }
+
+  .glow-text-small {
+    font-size: 1.25rem;
+  }
+  
+  .card {
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+  
+  .main-content {
+    padding: 0.5rem 1rem 1rem 1rem;
+  }
+  
+  .btn-primary, .btn-secondary {
+    padding: 0.8rem 1.5rem;
+    font-size: 1.2rem;
+    width: 100%;
+  }
+
+  .huge-number {
+    font-size: 6rem;
+  }
+
+  .leaderboard-container {
+    min-width: 100%;
+    padding: 1.5rem;
+  }
+  
+  .leaderboard-item {
+    padding: 0.5rem;
+  }
+
+  .leaderboard-item .rank {
+    width: 30px;
+    font-size: 1.2rem;
+  }
+
+  .leaderboard-item .name {
+    font-size: 1.2rem;
+  }
+
+  .leaderboard-item .score {
+    font-size: 1.5rem;
+  }
+
+  .stats-bar {
+    padding: 0.5rem 1rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .stat {
+    font-size: 1.2rem;
+  }
+
+  .stat span {
+    font-size: 2rem;
+    padding: 0 0.5rem;
+  }
+
+  .char-slot {
+    width: 45px;
+    height: 60px;
+    font-size: 2.5rem;
+  }
+
+  .instruction-box {
+    font-size: 1rem;
+    padding: 0.8rem 1rem;
+  }
+
+  .camera-container {
+    border-radius: 12px;
+  }
+  
+  .certificate-modal {
+    padding: 1rem;
+    box-shadow: 6px 6px 0px var(--neo-black);
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .marquee-container {
+    font-size: 1rem;
+  }
+  
+  .btn-primary, .btn-secondary {
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
+  }
+  
+  .huge-number {
+    font-size: 4.5rem;
+  }
+
+  .char-slot {
+    width: 35px;
+    height: 50px;
+    font-size: 2rem;
+  }
+  
+  .arcade-input {
+    gap: 0.5rem;
+  }
+  
+  .card {
+    padding: 1rem;
+  }
+  
+  .leaderboard-container {
+    padding: 1rem;
+  }
+  
+  .result-actions {
+    gap: 1rem;
+  }
 }
