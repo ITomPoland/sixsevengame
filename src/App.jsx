@@ -9,6 +9,7 @@ import ComboCounter from './components/ComboCounter';
 import ShockwaveRing from './components/ShockwaveRing';
 import Certificate from './components/Certificate';
 import ProgressBar, { getRank } from './components/ProgressBar';
+import AdminPanel from './components/AdminPanel';
 import { check67Gesture } from './gameLogic';
 import './index.css';
 import { database } from './firebase';
@@ -278,7 +279,7 @@ function App() {
       
       // 1. Upload zdjecia na ImgBB
       if (photoDataUrl) {
-        const apiKey = '63cb7cc9fa62b857682bd8c2f1ee18b3';
+        const apiKey = import.meta.env.VITE_IMGBB_API_KEY;
         const formData = new FormData();
         const base64Data = photoDataUrl.split(',')[1];
         formData.append('image', base64Data);
@@ -300,6 +301,7 @@ function App() {
       await set(newScoreRef, {
         name,
         score,
+        photoUrl: photoUrl || null,
         timestamp: serverTimestamp()
       });
       
@@ -331,6 +333,15 @@ function App() {
     setShowCertificate(false);
     photoCapturedRef.current = false;
     setScreen('CALIBRATION');
+  };
+
+  const handleAdminLogin = () => {
+    const password = prompt("Podaj hasło administratora:");
+    if (password === import.meta.env.VITE_ADMIN_PASSWORD) {
+      setScreen('ADMIN');
+    } else if (password !== null) {
+      alert("Nieprawidłowe hasło!");
+    }
   };
 
   const isFireMode = screen === 'PLAYING' && score >= 45;
@@ -388,6 +399,13 @@ function App() {
               </button>
             </div>
             <Leaderboard leaderboard={leaderboard} />
+            <button 
+              onClick={handleAdminLogin}
+              style={{ position: 'fixed', bottom: '15px', right: '15px', background: 'none', border: 'none', cursor: 'pointer', opacity: 0.3, fontSize: '1.5rem', zIndex: 100 }}
+              title="Panel Administratora"
+            >
+              🔒
+            </button>
           </div>
         )}
 
@@ -510,6 +528,10 @@ function App() {
             uploadedPhotoUrl={uploadedPhotoUrl}
             onClose={() => setShowCertificate(false)}
           />
+        )}
+
+        {screen === 'ADMIN' && (
+          <AdminPanel onBack={() => setScreen('START')} />
         )}
       </main>
     </div>

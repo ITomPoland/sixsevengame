@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAdVG5TDMLS3uSJuP9sSbTFh9V_sPmi3sU",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "sixsevengame-a5461.firebaseapp.com",
   projectId: "sixsevengame-a5461",
   storageBucket: "sixsevengame-a5461.firebasestorage.app",

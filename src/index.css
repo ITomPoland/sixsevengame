@@ -1229,3 +1229,97 @@ p {
     gap: 1rem;
   }
 }
+
+/* ============================
+   ADMIN PANEL
+   ============================ */
+
+.admin-panel {
+  background: var(--neo-white);
+  border: var(--border-width) solid var(--neo-black);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 12px 12px 0px var(--neo-black);
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 3px solid var(--neo-black);
+}
+
+.admin-header h2 {
+  font-size: 2rem;
+  color: var(--neo-black);
+}
+
+.admin-table-container {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th, .admin-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 2px solid rgba(0,0,0,0.1);
+}
+
+.admin-table th {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--neo-black);
+}
+
+.admin-score {
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: var(--neo-pink);
+}
+
+.admin-date {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.admin-photo-thumb {
+  width: 60px;
+  height: auto;
+  border: 2px solid var(--neo-black);
+  border-radius: 4px;
+  box-shadow: 2px 2px 0px var(--neo-black);
+  transition: transform 0.2s;
+}
+
+.admin-photo-thumb:hover {
+  transform: scale(1.5);
+  z-index: 10;
+  position: relative;
+}
+
+.btn-delete {
+  background: var(--neo-pink);
+  color: var(--neo-white);
+  border: 2px solid var(--neo-black);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px var(--neo-black);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.btn-delete:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px var(--neo-black);
+}
