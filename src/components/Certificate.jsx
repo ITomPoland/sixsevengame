@@ -226,8 +226,25 @@ const Certificate = ({ name, score, photoDataUrl, onClose }) => {
     try {
       const host = window.location.host;
       const protocol = window.location.protocol;
-      const certUrl = `${protocol}//${host}/?cert=${encodeURIComponent(name)}&score=${score}`;
-      setQrUrl(certUrl);
+      let certUrl = `${protocol}//${host}/?cert=${encodeURIComponent(name)}&score=${score}`;
+
+      if (photoDataUrl) {
+        const img = new Image();
+        img.onload = () => {
+          const thumbCanvas = document.createElement('canvas');
+          thumbCanvas.width = 100;
+          thumbCanvas.height = 75;
+          const thumbCtx = thumbCanvas.getContext('2d');
+          thumbCtx.drawImage(img, 0, 0, 100, 75);
+          // Compress heavily for QR code capacity
+          const miniPhoto = thumbCanvas.toDataURL('image/jpeg', 0.3);
+          certUrl += `#photo=${encodeURIComponent(miniPhoto)}`;
+          setQrUrl(certUrl);
+        };
+        img.src = photoDataUrl;
+      } else {
+        setQrUrl(certUrl);
+      }
     } catch {
       setQrUrl(`67 GAME - ${name} - ${score} pkt - ${rank}`);
     }

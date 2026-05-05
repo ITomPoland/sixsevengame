@@ -58,6 +58,17 @@ function App() {
       const paramScore = parseInt(params.get('score'), 10) || 0;
       setPlayerName(paramName);
       setScore(paramScore);
+      
+      // Check for photo in URL hash
+      if (window.location.hash && window.location.hash.startsWith('#photo=')) {
+        try {
+          const encodedPhoto = window.location.hash.substring(7); // remove '#photo='
+          setPhotoDataUrl(decodeURIComponent(encodedPhoto));
+        } catch (e) {
+          console.error("Failed to decode photo from URL", e);
+        }
+      }
+      
       setShowCertificate(true);
       // Clean up the URL so if they refresh or play, it doesn't keep showing the cert
       window.history.replaceState({}, document.title, window.location.pathname);
