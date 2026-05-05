@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { database } from '../firebase';
 import { ref as dbRef, onValue, remove } from 'firebase/database';
+import Certificate from './Certificate';
 
 const AdminPanel = ({ onBack }) => {
   const [entries, setEntries] = useState([]);
+  const [selectedCert, setSelectedCert] = useState(null);
 
   useEffect(() => {
     const leaderboardRef = dbRef(database, 'leaderboard');
@@ -73,9 +75,13 @@ const AdminPanel = ({ onBack }) => {
                   <td className="admin-date">{formatDate(entry.timestamp)}</td>
                   <td>
                     {entry.photoUrl ? (
-                      <a href={entry.photoUrl} target="_blank" rel="noopener noreferrer">
+                      <div 
+                        onClick={() => setSelectedCert(entry)} 
+                        style={{ cursor: 'pointer', display: 'inline-block' }}
+                        title="Pokaż pełny certyfikat"
+                      >
                         <img src={entry.photoUrl} alt={`Certyfikat ${entry.name}`} className="admin-photo-thumb" />
-                      </a>
+                      </div>
                     ) : (
                       <span style={{ color: 'var(--text-secondary)' }}>Brak zdjęcia</span>
                     )}
@@ -95,6 +101,15 @@ const AdminPanel = ({ onBack }) => {
           </tbody>
         </table>
       </div>
+
+      {selectedCert && (
+        <Certificate 
+          name={selectedCert.name}
+          score={selectedCert.score}
+          uploadedPhotoUrl={selectedCert.photoUrl}
+          onClose={() => setSelectedCert(null)}
+        />
+      )}
     </div>
   );
 };

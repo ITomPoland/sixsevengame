@@ -94,11 +94,13 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
     ctx.lineWidth = 4;
     ctx.strokeRect(photoX, photoY, photoW, photoH);
 
+    const photoSource = photoDataUrl || uploadedPhotoUrl;
+    
     // Draw photo if available (from base64 or ImgBB URL)
-    if (photoDataUrl) {
+    if (photoSource) {
       const img = new Image();
       // Obejście problemów CORS na płótnie, gdy obraz jest ładowany z obcego URL
-      if (photoDataUrl.startsWith('http')) {
+      if (photoSource.startsWith('http')) {
         img.crossOrigin = "anonymous";
       }
       
@@ -122,7 +124,7 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
         finishDraw(ctx, W, H);
       };
       
-      img.src = photoDataUrl;
+      img.src = photoSource;
     } else {
       drawFallbackCamera(ctx, photoX, photoY, photoW, photoH);
       finishDraw(ctx, W, H);

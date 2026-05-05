@@ -167,7 +167,8 @@ function App() {
       ctx.scale(-1, 1); // mirror to match display
       ctx.drawImage(video, -640, 0, 640, 480);
       ctx.restore();
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      // Zoptymalizowana kompresja WEBP (mniejszy rozmiar, świetna jakość)
+      const dataUrl = canvas.toDataURL('image/webp', 0.80);
       setPhotoDataUrl(dataUrl);
       photoCapturedRef.current = true;
     } catch (e) {
@@ -400,11 +401,12 @@ function App() {
             </div>
             <Leaderboard leaderboard={leaderboard} />
             <button 
+              className="btn-secondary"
               onClick={handleAdminLogin}
-              style={{ position: 'fixed', bottom: '15px', right: '15px', background: 'none', border: 'none', cursor: 'pointer', opacity: 0.3, fontSize: '1.5rem', zIndex: 100 }}
+              style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 9999, fontSize: '1rem', padding: '0.5rem 1rem', boxShadow: '4px 4px 0px var(--neo-black)' }}
               title="Panel Administratora"
             >
-              🔒
+              🔒 ADMIN
             </button>
           </div>
         )}
