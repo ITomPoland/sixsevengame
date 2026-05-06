@@ -25,7 +25,7 @@ const Flames = ({ active }) => {
     const H = canvas.height;
 
     // Camera rect within the canvas (centered, with padding around for flames)
-    const pad = 60;
+    const pad = 140;
     const camX = pad;
     const camY = pad;
     const camW = W - pad * 2;
@@ -141,8 +141,8 @@ const Flames = ({ active }) => {
   return (
     <canvas
       ref={canvasRef}
-      width={760}
-      height={600}
+      width={920}
+      height={760}
       className="flames-canvas"
     />
   );
