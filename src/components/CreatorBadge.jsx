@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import avatarImg from '../assets/itom-avatar-waving.png';
 
-const CreatorBadge = () => {
+const CreatorBadge = ({ isExiting }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -10,7 +10,7 @@ const CreatorBadge = () => {
       href="https://itomdev.com"
       target="_blank"
       rel="noopener noreferrer"
-      className={`creator-badge ${isHovered ? 'creator-badge--hover' : ''}`}
+      className={`creator-badge ${isHovered ? 'creator-badge--hover' : ''} ${isExiting ? 'is-exiting-fixed' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       title="Check out my portfolio!"

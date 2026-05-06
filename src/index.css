@@ -1748,6 +1748,10 @@ p {
   animation: brutalistStatsExit 0.4s cubic-bezier(0.75, 0, 0.25, 1) forwards;
 }
 
+.is-exiting-game .progress-wrapper {
+  animation: brutalistGameExit 0.4s cubic-bezier(0.75, 0, 0.25, 1) forwards;
+}
+
 .is-exiting-game .camera-wrapper {
   animation: brutalistGameExit 0.5s cubic-bezier(0.75, 0, 0.25, 1) 0.1s forwards;
 }
@@ -1806,6 +1810,15 @@ p {
 .final-result-card .final-score { animation-delay: 0.2s; }
 .final-result-card .rank-display { animation-delay: 0.3s; }
 .final-result-card .result-actions { animation-delay: 0.4s; }
+
+.is-exiting-result {
+  animation: brutalistNameExit 0.5s cubic-bezier(0.75, 0, 0.25, 1) forwards !important;
+}
+
+/* PROGRESS BAR ENTRANCE */
+.progress-wrapper {
+  animation: cameraDropIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s both;
+}
 
 /* ============================
    NOISE / FILM GRAIN OVERLAY

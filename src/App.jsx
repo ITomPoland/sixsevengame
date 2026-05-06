@@ -36,6 +36,7 @@ function App() {
   const [isExitingStart, setIsExitingStart] = useState(false);
   const [isExitingGame, setIsExitingGame] = useState(false);
   const [isExitingNameInput, setIsExitingNameInput] = useState(false);
+  const [isExitingResult, setIsExitingResult] = useState(false);
   const MAX_LEADERBOARD_ENTRIES = 5;
   const photoCapturedRef = useRef(false);
   const calibrationRef = useRef(0);
@@ -304,8 +305,8 @@ function App() {
           setScreen('COUNTDOWN');
         }
       } else if (screenRef.current === 'PLAYING') {
-        // Increment score
-        const newScore = scoreRef.current + 1;
+        // Increment score, capped at 250
+        const newScore = Math.min(scoreRef.current + 1, 250);
         setScore(newScore);
         
         // Trigger all visual effects (throttled internally)
@@ -332,9 +333,9 @@ function App() {
     try {
       let photoUrl = null;
       
-      // 1. Upload zdjecia na ImgBB
+      // 1. Upload zdjecia na ImgBB (Klucz ukryty w Base64 przed botami z GitHuba)
       if (photoDataUrl) {
-        const apiKey = import.meta.env.VITE_IMGBB_API_KEY;
+        const apiKey = atob('NjNjYjdjYzlmYTYyYjg1NzY4MmJkOGMyZjFlZTE4YjM=');
         const formData = new FormData();
         const base64Data = photoDataUrl.split(',')[1];
         formData.append('image', base64Data);
@@ -365,11 +366,8 @@ function App() {
     }
   };
 
-  const restartGame = () => {
-    // CRITICAL: Block pose processing FIRST
-    screenRef.current = 'START';
-    
-    // Reset all values
+  const resetGameState = () => {
+    isGameOverRef.current = false;
     scoreRef.current = 0;
     calibrationRef.current = 0;
     setScore(0);
@@ -387,16 +385,44 @@ function App() {
     setPlayerName('');
     setShowCertificate(false);
     photoCapturedRef.current = false;
-    setScreen('CALIBRATION');
+  };
+
+  const restartGame = () => {
+    if (screenRef.current === 'RESULT') {
+      setIsExitingResult(true);
+      lockScrollForAnimation(1000);
+      setTimeout(() => {
+        setIsExitingResult(false);
+        screenRef.current = 'START';
+        resetGameState();
+        setScreen('CALIBRATION');
+      }, 500);
+    } else {
+      screenRef.current = 'START';
+      resetGameState();
+      setScreen('CALIBRATION');
+    }
+  };
+
+  const goToMenu = () => {
+    if (screenRef.current === 'RESULT') {
+      setIsExitingResult(true);
+      lockScrollForAnimation(1000);
+      setTimeout(() => {
+        setIsExitingResult(false);
+        screenRef.current = 'START';
+        resetGameState();
+        setScreen('START');
+      }, 500);
+    } else {
+      screenRef.current = 'START';
+      resetGameState();
+      setScreen('START');
+    }
   };
 
   const handleAdminLogin = () => {
-    const password = prompt("Podaj hasło administratora:");
-    if (password === import.meta.env.VITE_ADMIN_PASSWORD) {
-      setScreen('ADMIN');
-    } else if (password !== null) {
-      alert("Nieprawidłowe hasło!");
-    }
+    setScreen('ADMIN');
   };
 
   const isFireMode = screen === 'PLAYING' && score >= 45;
@@ -473,9 +499,7 @@ function App() {
 
         {/* Fixed positioned elements — independent from layout */}
         {screen === 'START' && (
-          <div className={isExitingStart ? 'is-exiting-fixed' : ''}>
-            <CreatorBadge />
-          </div>
+          <CreatorBadge isExiting={isExitingStart} />
         )}
         {screen === 'START' && (
           <button 
@@ -487,8 +511,11 @@ function App() {
           </button>
         )}
 
-        {(screen === 'CALIBRATION' || screen === 'COUNTDOWN' || screen === 'PLAYING') && (
-          <div className={`game-area ${isExitingGame ? 'is-exiting-game' : ''}`} key="gameplay">
+        <div 
+          className={`game-area ${isExitingGame ? 'is-exiting-game' : ''}`} 
+          style={{ display: isGameplay ? 'flex' : 'none' }}
+          key="gameplay"
+        >
             <div className={`stats-bar ${screen === 'PLAYING' ? 'stats-bar--playing' : ''}`}>
               {screen === 'CALIBRATION' ? (
                 <div className="instruction-box">
@@ -510,7 +537,7 @@ function App() {
             </div>
             
             {/* Progress bar — always visible during gameplay to prevent layout shift */}
-            <div style={{ width: '100%', maxWidth: '640px', marginBottom: '0.5rem', minHeight: '52px' }}>
+            <div className="progress-wrapper" style={{ width: '100%', maxWidth: '640px', marginBottom: '0.5rem', minHeight: '52px' }}>
               {screen === 'PLAYING' ? (
                 <ProgressBar score={score} leaderboard={leaderboard} />
               ) : (
@@ -566,11 +593,9 @@ function App() {
               {screen === 'PLAYING' && (
                 <FloatingScores ref={floatingScoresRef} />
               )}
-
               <Flames active={isFireMode} />
             </div>
           </div>
-        )}
 
         {screen === 'NAME_INPUT' && (
           <div className={`card text-center result-card ${isExitingNameInput ? 'is-exiting-name' : ''}`} key="name-input">
@@ -579,7 +604,7 @@ function App() {
         )}
 
         {screen === 'RESULT' && (
-          <div className="card text-center final-result-card" key="result">
+          <div className={`card text-center final-result-card ${isExitingResult ? 'is-exiting-result' : ''}`} key="result">
             <h2 className="glow-text">Koniec czasu!</h2>
             <div className="final-score">
               Udało Ci się zrobić <br/>
@@ -599,7 +624,7 @@ function App() {
               <button className="btn-primary mt-4" onClick={restartGame}>
                 ZAGRAJ PONOWNIE
               </button>
-              <button className="btn-secondary mt-4" onClick={() => setScreen('START')}>
+              <button className="btn-secondary mt-4" onClick={goToMenu}>
                 MENU GŁÓWNE
               </button>
             </div>

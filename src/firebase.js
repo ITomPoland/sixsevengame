@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,7 +14,7 @@ const firebaseConfig = {
   databaseURL: "https://sixsevengame-a5461-default-rtdb.europe-west1.firebasedatabase.app" // Domyslny format dla eu
 };
 
-// Jeśli databaseURL bez regionu, to zazwyczaj: https://sixsevengame-a5461-default-rtdb.firebaseio.com
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const database = getDatabase(app);
+export const auth = getAuth(app);
