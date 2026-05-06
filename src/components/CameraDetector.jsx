@@ -108,11 +108,18 @@ export default function CameraDetector({ onPoseUpdate }) {
         smoothLeftRef.current.y += (leftWrist.y - smoothLeftRef.current.y) * SMOOTH;
         const sx = smoothLeftRef.current.x * canvas.width;
         const sy = smoothLeftRef.current.y * canvas.height;
-        ctx.fillStyle = '#ff0055';
+        // Neon ring with glow
+        ctx.strokeStyle = '#ff0055';
+        ctx.lineWidth = 3;
         ctx.shadowColor = '#ff0055';
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 18;
         ctx.beginPath();
-        ctx.arc(sx, sy, 15, 0, 2 * Math.PI);
+        ctx.arc(sx, sy, 16, 0, 2 * Math.PI);
+        ctx.stroke();
+        // Inner dot
+        ctx.fillStyle = '#ff0055';
+        ctx.beginPath();
+        ctx.arc(sx, sy, 4, 0, 2 * Math.PI);
         ctx.fill();
         ctx.shadowBlur = 0;
       }
@@ -122,23 +129,37 @@ export default function CameraDetector({ onPoseUpdate }) {
         smoothRightRef.current.y += (rightWrist.y - smoothRightRef.current.y) * SMOOTH;
         const sx = smoothRightRef.current.x * canvas.width;
         const sy = smoothRightRef.current.y * canvas.height;
-        ctx.fillStyle = '#0055ff';
+        // Neon ring with glow
+        ctx.strokeStyle = '#0055ff';
+        ctx.lineWidth = 3;
         ctx.shadowColor = '#0055ff';
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 18;
         ctx.beginPath();
-        ctx.arc(sx, sy, 15, 0, 2 * Math.PI);
+        ctx.arc(sx, sy, 16, 0, 2 * Math.PI);
+        ctx.stroke();
+        // Inner dot
+        ctx.fillStyle = '#0055ff';
+        ctx.beginPath();
+        ctx.arc(sx, sy, 4, 0, 2 * Math.PI);
         ctx.fill();
         ctx.shadowBlur = 0;
       }
       
-      // Rysowanie polaczenia miedzy nadgarstkami
+      // Animated dashed connection line between wrists
       if (leftWrist && rightWrist && leftWrist.visibility > 0.4 && rightWrist.visibility > 0.4) {
-        ctx.strokeStyle = "rgba(0, 0, 0, 0.2)";
-        ctx.lineWidth = 4;
+        const lx = smoothLeftRef.current.x * canvas.width;
+        const ly = smoothLeftRef.current.y * canvas.height;
+        const rx = smoothRightRef.current.x * canvas.width;
+        const ry = smoothRightRef.current.y * canvas.height;
+        ctx.strokeStyle = 'rgba(17, 17, 17, 0.25)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 6]);
+        ctx.lineDashOffset = -(performance.now() / 40); // animated dash
         ctx.beginPath();
-        ctx.moveTo(leftWrist.x * canvas.width, leftWrist.y * canvas.height);
-        ctx.lineTo(rightWrist.x * canvas.width, rightWrist.y * canvas.height);
+        ctx.moveTo(lx, ly);
+        ctx.lineTo(rx, ry);
         ctx.stroke();
+        ctx.setLineDash([]);
       }
     }
 

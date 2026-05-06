@@ -10,6 +10,9 @@ import ShockwaveRing from './components/ShockwaveRing';
 import Certificate from './components/Certificate';
 import ProgressBar, { getRank } from './components/ProgressBar';
 import AdminPanel from './components/AdminPanel';
+import CreatorBadge from './components/CreatorBadge';
+import NoiseOverlay from './components/NoiseOverlay';
+import CircularTimer from './components/CircularTimer';
 import { check67Gesture } from './gameLogic';
 import './index.css';
 import { database } from './firebase';
@@ -29,6 +32,9 @@ function App() {
   const [showCertificate, setShowCertificate] = useState(false);
   const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState(null);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
+  const [isExitingStart, setIsExitingStart] = useState(false);
+  const [isExitingGame, setIsExitingGame] = useState(false);
+  const [isExitingNameInput, setIsExitingNameInput] = useState(false);
   const MAX_LEADERBOARD_ENTRIES = 5;
   const photoCapturedRef = useRef(false);
   const calibrationRef = useRef(0);
@@ -54,6 +60,22 @@ function App() {
   const comboRef = useRef(0);
   const lastScoreTimeRef = useRef(0);
   const comboTimeoutRef = useRef(null);
+  const animationLockTimeoutRef = useRef(null);
+
+  const lockScrollForAnimation = (duration = 1000) => {
+    document.documentElement.classList.add('is-animating');
+    document.body.classList.add('is-animating');
+    if (animationLockTimeoutRef.current) clearTimeout(animationLockTimeoutRef.current);
+    animationLockTimeoutRef.current = setTimeout(() => {
+      document.documentElement.classList.remove('is-animating');
+      document.body.classList.remove('is-animating');
+    }, duration);
+  };
+
+  // Lock scroll on mount and screen changes to prevent scrollbar flashing
+  useEffect(() => {
+    lockScrollForAnimation(1200);
+  }, [screen]);
 
   // Load leaderboard on mount and check URL for QR certificate
   useEffect(() => {
@@ -146,14 +168,19 @@ function App() {
 
   // 4. Przejście po zakończeniu czasu w grze
   useEffect(() => {
-    if (screen === 'PLAYING' && timeLeft === 0) {
+    if (screen === 'PLAYING' && timeLeft === 0 && !isExitingGame) {
       // Final photo capture if not done yet
       if (!photoCapturedRef.current) capturePhoto();
       
-      // Always go to NAME_INPUT so everyone gets a certificate
-      setScreen('NAME_INPUT');
+      // Delay screen transition for exit animation
+      setIsExitingGame(true);
+      lockScrollForAnimation(1200); // Lock during exit + entry
+      setTimeout(() => {
+        setIsExitingGame(false);
+        setScreen('NAME_INPUT');
+      }, 600);
     }
-  }, [timeLeft, screen]);
+  }, [timeLeft, screen, isExitingGame]);
 
   const capturePhoto = () => {
     try {
@@ -232,6 +259,15 @@ function App() {
     }
   };
 
+  const handleStartGame = () => {
+    setIsExitingStart(true);
+    lockScrollForAnimation(1400); // Lock during exit + entry
+    setTimeout(() => {
+      setIsExitingStart(false);
+      setScreen('CALIBRATION');
+    }, 600); // Wait 600ms for exit animations
+  };
+
   const handlePoseUpdate = (leftWrist, rightWrist) => {
     if (screenRef.current !== 'CALIBRATION' && screenRef.current !== 'PLAYING') return;
 
@@ -273,7 +309,14 @@ function App() {
 
   const handleNameSubmit = async (name) => {
     setPlayerName(name);
-    setScreen('RESULT'); // Pokazujemy rezultat od razu, w tle leci upload
+    setIsExitingNameInput(true);
+    lockScrollForAnimation(1400); // Lock during exit + entry
+    
+    // Animate out for 600ms
+    setTimeout(() => {
+      setIsExitingNameInput(false);
+      setScreen('RESULT'); // Pokazujemy rezultat w tle leci upload
+    }, 600);
     
     try {
       let photoUrl = null;
@@ -351,6 +394,9 @@ function App() {
 
   return (
     <div className={`app-container ${isFireMode ? 'fire-mode' : ''} ${isWarmGlow ? 'glow-warm' : ''} ${isGameplay ? 'is-gameplay' : ''}`}>
+      {/* Film grain overlay — always present */}
+      <NoiseOverlay />
+      
       <div className="marquee-container">
         <div className="marquee-content">
           <div className="marquee-track">
@@ -381,39 +427,58 @@ function App() {
       </div>
       
       {screen === 'START' && (
-        <header className="header">
-          <h1>67 GAME</h1>
+        <header className={`header ${isExitingStart ? 'is-exiting' : ''}`}>
+          <div className="hero-67">
+            <span className="hero-six">6</span>
+            <span className="hero-seven">7</span>
+          </div>
+          <div className="hero-game-label-wrapper">
+            <span className="hero-game-label">✦ SPEED GAME ✦</span>
+          </div>
         </header>
       )}
 
       <main className="main-content">
         {screen === 'START' && (
-          <div className="start-layout">
+          <div className={`start-layout ${isExitingStart ? 'is-exiting' : ''}`} key="start">
             <div className="card start-card">
-              <h2 className="glow-text">Festiwal Nauki UO - Wyzwanie "67"</h2>
+              <span className="sticker-accent sticker-accent--time">15 SEC</span>
+              <span className="sticker-accent sticker-accent--hand">🖐️</span>
+              <div className="card-header-editorial">
+                <span className="card-overline">Festiwal Nauki UO</span>
+                <h2 className="card-title">WYZWANIE "67"</h2>
+              </div>
               <p>Sprawdź swoją szybkość! Masz 15 sekund, by wykonać jak najwięcej naprzemiennych wymachów rąk (lewa góra, prawa dół i na odwrót).</p>
-              <div className="instruction-box" style={{marginBottom: '2rem'}}>
+              <div className="instruction-box" style={{marginBottom: '1.5rem'}}>
                 <span className="icon">⚠️</span> Odsun się odrobinę, by kamera widziała Twoje ramiona!
               </div>
-              <button className="btn-primary" onClick={() => setScreen('CALIBRATION')}>
+              <button className="btn-primary" onClick={handleStartGame}>
                 ROZPOCZNIJ GRĘ
               </button>
             </div>
             <Leaderboard leaderboard={leaderboard} />
-            <button 
-              className="btn-secondary"
-              onClick={handleAdminLogin}
-              style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 9999, fontSize: '1rem', padding: '0.5rem 1rem', boxShadow: '4px 4px 0px var(--neo-black)' }}
-              title="Panel Administratora"
-            >
-              🔒 ADMIN
-            </button>
           </div>
         )}
 
+        {/* Fixed positioned elements — independent from layout */}
+        {screen === 'START' && (
+          <div className={isExitingStart ? 'is-exiting-fixed' : ''}>
+            <CreatorBadge />
+          </div>
+        )}
+        {screen === 'START' && (
+          <button 
+            className={`btn-secondary admin-btn-fixed ${isExitingStart ? 'is-exiting-fixed' : ''}`}
+            onClick={handleAdminLogin}
+            title="Panel Administratora"
+          >
+            🔒 ADMIN
+          </button>
+        )}
+
         {(screen === 'CALIBRATION' || screen === 'COUNTDOWN' || screen === 'PLAYING') && (
-          <div className="game-area">
-            <div className="stats-bar">
+          <div className={`game-area ${isExitingGame ? 'is-exiting-game' : ''}`} key="gameplay">
+            <div className={`stats-bar ${screen === 'PLAYING' ? 'stats-bar--playing' : ''}`}>
               {screen === 'CALIBRATION' ? (
                 <div className="instruction-box">
                   Zrób 5 próbnych wymachów! (Zrobiono: {calibrationCount}/5)
@@ -424,8 +489,11 @@ function App() {
                 </div>
               ) : (
                 <>
-                  <div className="stat">Wynik: <span key={score} className="score-punch">{score}</span></div>
-                  <div className="stat">Czas: <span>{timeLeft}s</span></div>
+                  <div className="stat">
+                    <span className="live-dot">LIVE</span>
+                    Wynik: <span key={score} className="score-punch">{score}</span>
+                  </div>
+                  <CircularTimer timeLeft={timeLeft} />
                 </>
               )}
             </div>
@@ -489,13 +557,13 @@ function App() {
         )}
 
         {screen === 'NAME_INPUT' && (
-          <div className="card text-center">
+          <div className={`card text-center result-card ${isExitingNameInput ? 'is-exiting-name' : ''}`} key="name-input">
             <NameInput score={score} onSubmit={handleNameSubmit} />
           </div>
         )}
 
         {screen === 'RESULT' && (
-          <div className="card text-center">
+          <div className="card text-center final-result-card" key="result">
             <h2 className="glow-text">Koniec czasu!</h2>
             <div className="final-score">
               Udało Ci się zrobić <br/>

@@ -223,17 +223,17 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
     ctx.restore();
 
     ctx.save();
-    ctx.translate(W - 240, H - 185);
+    ctx.translate(W - 260, H - 185);
     ctx.rotate(0.08);
-    ctx.fillStyle = '#ff00a0';
-    ctx.fillRect(0, 0, 180, 40);
+    ctx.fillStyle = '#0055ff';
+    ctx.fillRect(0, 0, 210, 40);
     ctx.strokeStyle = '#111111';
     ctx.lineWidth = 3;
-    ctx.strokeRect(0, 0, 180, 40);
+    ctx.strokeRect(0, 0, 210, 40);
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 18px "Space Grotesk", sans-serif';
+    ctx.font = 'bold 16px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('NAUKI UO 2026', 90, 28);
+    ctx.fillText('MADE BY ITOM • itomdev.com', 105, 27);
     ctx.restore();
 
     // Generate data URL
