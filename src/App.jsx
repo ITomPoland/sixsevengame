@@ -25,6 +25,7 @@ function App() {
   const [timeLeft, setTimeLeft] = useState(15);
   const [countdownTime, setCountdownTime] = useState(3);
   const [showStartText, setShowStartText] = useState(false);
+  const [showEndText, setShowEndText] = useState(false);
   const [leaderboard, setLeaderboard] = useState([]);
   const [combo, setCombo] = useState(0);
   const [photoDataUrl, setPhotoDataUrl] = useState(null);
@@ -43,6 +44,7 @@ function App() {
   const lastGestureRef = useRef('neutral');
   const scoreRef = useRef(0);
   const screenRef = useRef('START');
+  const isGameOverRef = useRef(false);
   
   // Cache for wrists to handle frame drops during fast motion
   const lastLeftWristRef = useRef(null);
@@ -141,6 +143,7 @@ function App() {
   useEffect(() => {
     if (screen === 'COUNTDOWN' && countdownTime === 0) {
       // Reset ALL refs directly — useEffect sync is async and too late
+      isGameOverRef.current = false;
       setScore(0);
       scoreRef.current = 0;
       setTimeLeft(15);
@@ -168,19 +171,26 @@ function App() {
 
   // 4. Przejście po zakończeniu czasu w grze
   useEffect(() => {
-    if (screen === 'PLAYING' && timeLeft === 0 && !isExitingGame) {
+    if (screen === 'PLAYING' && timeLeft === 0 && !showEndText) {
+      isGameOverRef.current = true;
       // Final photo capture if not done yet
       if (!photoCapturedRef.current) capturePhoto();
       
-      // Delay screen transition for exit animation
-      setIsExitingGame(true);
-      lockScrollForAnimation(1200); // Lock during exit + entry
+      setShowEndText(true);
+      
+      // Pokazujemy napis KONIEC! na ekranie i po 2 sekundach odpalamy wyjście
       setTimeout(() => {
-        setIsExitingGame(false);
-        setScreen('NAME_INPUT');
-      }, 600);
+        // Delay screen transition for exit animation
+        setIsExitingGame(true);
+        lockScrollForAnimation(1200); // Lock during exit + entry
+        setTimeout(() => {
+          setIsExitingGame(false);
+          setShowEndText(false); // reset stanu
+          setScreen('NAME_INPUT');
+        }, 600);
+      }, 2000);
     }
-  }, [timeLeft, screen, isExitingGame]);
+  }, [timeLeft, screen, showEndText]);
 
   const capturePhoto = () => {
     try {
@@ -270,6 +280,7 @@ function App() {
 
   const handlePoseUpdate = (leftWrist, rightWrist) => {
     if (screenRef.current !== 'CALIBRATION' && screenRef.current !== 'PLAYING') return;
+    if (isGameOverRef.current) return;
 
     // Cache the positions
     if (leftWrist) lastLeftWristRef.current = leftWrist;
@@ -535,13 +546,18 @@ function App() {
                 
                 {screen === 'COUNTDOWN' && (
                   <div className="countdown-overlay">
-                    {countdownTime}
+                    <span key={countdownTime} className="countdown-text">{countdownTime}</span>
                   </div>
                 )}
                 
                 {showStartText && screen === 'PLAYING' && (
                   <div className="countdown-overlay" style={{ color: 'var(--neo-yellow)' }}>
-                    START!
+                    <span className="countdown-text">START!</span>
+                  </div>
+                )}
+                {showEndText && screen === 'PLAYING' && (
+                  <div className="countdown-overlay" style={{ color: 'var(--neo-pink)' }}>
+                    <span className="countdown-text">KONIEC!</span>
                   </div>
                 )}
               </div>
