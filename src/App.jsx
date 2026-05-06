@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import CameraDetector from './components/CameraDetector';
 import Leaderboard from './components/Leaderboard';
 import NameInput from './components/NameInput';
@@ -76,7 +76,7 @@ function App() {
   };
 
   // Lock scroll on mount and screen changes to prevent scrollbar flashing
-  useEffect(() => {
+  useLayoutEffect(() => {
     lockScrollForAnimation(1200);
   }, [screen]);
 
