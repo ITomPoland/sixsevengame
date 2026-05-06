@@ -5,6 +5,8 @@ const MAX_CHARS = 6;
 const NameInput = ({ score, onSubmit }) => {
   const [name, setName] = useState('');
 
+  const [consent, setConsent] = useState(false);
+
   // Handle keyboard typing for arcade feel
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -15,17 +17,17 @@ const NameInput = ({ score, onSubmit }) => {
       } else if (e.key === 'Backspace') {
         setName((prev) => prev.slice(0, -1));
       } else if (e.key === 'Enter' && name.length > 0) {
-        onSubmit(name);
+        onSubmit(name, consent);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [name, onSubmit]);
+  }, [name, consent, onSubmit]);
 
   const handleSubmit = () => {
     if (name.length > 0) {
-      onSubmit(name);
+      onSubmit(name, consent);
     }
   };
 
@@ -49,6 +51,18 @@ const NameInput = ({ score, onSubmit }) => {
         ))}
       </div>
       
+      <div style={{ marginTop: '1.5rem', textAlign: 'left', maxWidth: '400px', margin: '1.5rem auto 0 auto', background: 'rgba(0,0,0,0.4)', padding: '1rem', border: '2px solid var(--secondary)' }}>
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', lineHeight: '1.4' }}>
+          <input 
+            type="checkbox" 
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            style={{ marginTop: '3px', transform: 'scale(1.2)', accentColor: 'var(--neo-pink)' }}
+          />
+          <span>Zgadzam się na publikację mojego wyniku oraz pamiątkowego zdjęcia na profilach społecznościowych twórców (np. LinkedIn) w celach promocyjnych.</span>
+        </label>
+      </div>
+
       <button 
         className={`btn-primary arcade-btn`}
         onClick={handleSubmit}

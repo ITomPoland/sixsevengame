@@ -319,7 +319,7 @@ function App() {
     }
   };
 
-  const handleNameSubmit = async (name) => {
+  const handleNameSubmit = async (name, consent) => {
     setPlayerName(name);
     setIsExitingNameInput(true);
     lockScrollForAnimation(1400); // Lock during exit + entry
@@ -358,6 +358,7 @@ function App() {
         name,
         score,
         photoUrl: photoUrl || null,
+        consentGiven: consent,
         timestamp: serverTimestamp()
       });
       

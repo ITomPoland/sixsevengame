@@ -118,6 +118,7 @@ const AdminPanel = ({ onBack }) => {
               <th>Nick</th>
               <th>Wynik</th>
               <th>Data</th>
+              <th>Zgoda</th>
               <th>Certyfikat</th>
               <th>Akcje</th>
             </tr>
@@ -125,7 +126,7 @@ const AdminPanel = ({ onBack }) => {
           <tbody>
             {entries.length === 0 ? (
               <tr>
-                <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>Brak wpisów w bazie.</td>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Brak wpisów w bazie.</td>
               </tr>
             ) : (
               entries.map((entry, index) => (
@@ -134,6 +135,13 @@ const AdminPanel = ({ onBack }) => {
                   <td><strong>{entry.name}</strong></td>
                   <td><span className="admin-score">{entry.score}</span></td>
                   <td className="admin-date">{formatDate(entry.timestamp)}</td>
+                  <td>
+                    {entry.consentGiven ? (
+                      <span style={{ color: 'var(--neo-green)', fontWeight: 'bold' }}>✅ TAK</span>
+                    ) : (
+                      <span style={{ color: 'var(--neo-pink)', fontWeight: 'bold' }}>❌ NIE</span>
+                    )}
+                  </td>
                   <td>
                     {entry.photoUrl ? (
                       <div 
