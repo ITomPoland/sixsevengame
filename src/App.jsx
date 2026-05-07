@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import CameraDetector from './components/CameraDetector';
 import Leaderboard from './components/Leaderboard';
 import NameInput from './components/NameInput';
@@ -13,13 +13,18 @@ import AdminPanel from './components/AdminPanel';
 import CreatorBadge from './components/CreatorBadge';
 import NoiseOverlay from './components/NoiseOverlay';
 import CircularTimer from './components/CircularTimer';
+import Preloader from './components/Preloader';
 import { check67Gesture } from './gameLogic';
 import './index.css';
 import { database } from './firebase';
 import { ref as dbRef, onValue, push, set, serverTimestamp } from 'firebase/database';
 
 function App() {
-  const [screen, setScreen] = useState('START');
+  const [screen, setScreen] = useState('PRELOADING');
+  const [preloaderProgress, setPreloaderProgress] = useState(0);
+  const [isPreloaderExiting, setIsPreloaderExiting] = useState(false);
+  const preloadedStreamRef = useRef(null);
+  const preloadedLandmarkerRef = useRef(null);
   const [score, setScore] = useState(0);
   const [calibrationCount, setCalibrationCount] = useState(0);
   const [timeLeft, setTimeLeft] = useState(15);
@@ -37,6 +42,7 @@ function App() {
   const [isExitingGame, setIsExitingGame] = useState(false);
   const [isExitingNameInput, setIsExitingNameInput] = useState(false);
   const [isExitingResult, setIsExitingResult] = useState(false);
+  const [isReturningToMenu, setIsReturningToMenu] = useState(false);
   const MAX_LEADERBOARD_ENTRIES = 5;
   const photoCapturedRef = useRef(false);
   const calibrationRef = useRef(0);
@@ -413,12 +419,16 @@ function App() {
         setIsExitingResult(false);
         screenRef.current = 'START';
         resetGameState();
+        setIsReturningToMenu(true);
         setScreen('START');
+        setTimeout(() => setIsReturningToMenu(false), 1000);
       }, 500);
     } else {
       screenRef.current = 'START';
       resetGameState();
+      setIsReturningToMenu(true);
       setScreen('START');
+      setTimeout(() => setIsReturningToMenu(false), 1000);
     }
   };
 
@@ -426,53 +436,130 @@ function App() {
     setScreen('ADMIN');
   };
 
+  const handlePreloaderReady = useCallback((stream, landmarker) => {
+    preloadedStreamRef.current = stream;
+    preloadedLandmarkerRef.current = landmarker;
+    setScreen('START');
+    setIsPreloaderExiting(false);
+  }, []);
+
   const isFireMode = screen === 'PLAYING' && score >= 45;
   const isWarmGlow = screen === 'PLAYING' && score >= 10 && score < 45;
   const isGameplay = screen === 'CALIBRATION' || screen === 'COUNTDOWN' || screen === 'PLAYING';
+  const isPreloading = screen === 'PRELOADING';
 
   return (
     <div className={`app-container ${isFireMode ? 'fire-mode' : ''} ${isWarmGlow ? 'glow-warm' : ''} ${isGameplay ? 'is-gameplay' : ''}`}>
       {/* Film grain overlay — always present */}
       <NoiseOverlay />
       
-      <div className="marquee-container">
-        <div className="marquee-content">
-          <div className="marquee-track">
-            <span>/// 67 GAME ///</span>
-            <span>FESTIWAL NAUKI UO</span>
-            <span>/// ZAGRAJ TERAZ ///</span>
-            <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
-            <span>/// 67 GAME ///</span>
-            <span>FESTIWAL NAUKI UO</span>
-            <span>/// ZAGRAJ TERAZ ///</span>
-            <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
-            <span>/// 67 GAME ///</span>
-            <span>FESTIWAL NAUKI UO</span>
+      {/* Preloader Background and UI (renders underneath the global header) */}
+      {isPreloading && (
+        <Preloader 
+          onReady={handlePreloaderReady} 
+          onProgress={setPreloaderProgress}
+          onExitStart={() => setIsPreloaderExiting(true)}
+        />
+      )}
+      
+      {/* Global Marquee — 3D Slot Machine */}
+      <div className="marquee-3d-container">
+        <div className={`marquee-3d-drum ${!isPreloading || isPreloaderExiting ? 'is-flipped' : ''}`}>
+          
+          {/* FRONT FACE (Preloading) */}
+          <div className="marquee-face marquee-face--front">
+            <div className="marquee-content">
+              <div className="marquee-track">
+                <span>/// 67 GAME ///</span>
+                <span>ŁADOWANIE</span>
+                <span>/// ZAGRAJ TERAZ ///</span>
+                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
+                <span>/// 67 GAME ///</span>
+                <span>ŁADOWANIE</span>
+                <span>/// ZAGRAJ TERAZ ///</span>
+                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
+                <span>/// 67 GAME ///</span>
+                <span>ŁADOWANIE</span>
+              </div>
+              <div className="marquee-track" aria-hidden="true">
+                <span>/// 67 GAME ///</span>
+                <span>ŁADOWANIE</span>
+                <span>/// ZAGRAJ TERAZ ///</span>
+                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
+                <span>/// 67 GAME ///</span>
+                <span>ŁADOWANIE</span>
+                <span>/// ZAGRAJ TERAZ ///</span>
+                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
+                <span>/// 67 GAME ///</span>
+                <span>ŁADOWANIE</span>
+              </div>
+            </div>
           </div>
-          <div className="marquee-track" aria-hidden="true">
-            <span>/// 67 GAME ///</span>
-            <span>FESTIWAL NAUKI UO</span>
-            <span>/// ZAGRAJ TERAZ ///</span>
-            <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
-            <span>/// 67 GAME ///</span>
-            <span>FESTIWAL NAUKI UO</span>
-            <span>/// ZAGRAJ TERAZ ///</span>
-            <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
-            <span>/// 67 GAME ///</span>
-            <span>FESTIWAL NAUKI UO</span>
+
+          {/* BOTTOM FACE (Start Screen) */}
+          <div className="marquee-face marquee-face--bottom">
+            <div className="marquee-content">
+              <div className="marquee-track">
+                <span>/// 67 GAME ///</span>
+                <span>FESTIWAL NAUKI UO</span>
+                <span>/// ZAGRAJ TERAZ ///</span>
+                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
+                <span>/// 67 GAME ///</span>
+                <span>FESTIWAL NAUKI UO</span>
+                <span>/// ZAGRAJ TERAZ ///</span>
+                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
+                <span>/// 67 GAME ///</span>
+                <span>FESTIWAL NAUKI UO</span>
+              </div>
+              <div className="marquee-track" aria-hidden="true">
+                <span>/// 67 GAME ///</span>
+                <span>FESTIWAL NAUKI UO</span>
+                <span>/// ZAGRAJ TERAZ ///</span>
+                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
+                <span>/// 67 GAME ///</span>
+                <span>FESTIWAL NAUKI UO</span>
+                <span>/// ZAGRAJ TERAZ ///</span>
+                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
+                <span>/// 67 GAME ///</span>
+                <span>FESTIWAL NAUKI UO</span>
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
       
-      {screen === 'START' && (
-        <header className={`header ${isExitingStart ? 'is-exiting' : ''}`}>
-          <div className="hero-67">
+      {/* Shared HEADER with 67 Hero — Active during PRELOADER and START */}
+      {(isPreloading || screen === 'START') && (
+        <header className={`header ${isExitingStart ? 'is-exiting' : ''} ${isPreloading ? 'header--preloading' : ''} ${isPreloaderExiting ? 'header--preloader-exiting' : ''} ${isReturningToMenu ? 'header--returning' : ''}`}>
+          <div className={`hero-67 ${screen === 'START' ? 'is-floating' : ''}`}>
             <span className="hero-six">6</span>
+            
+            {/* Progress ring ONLY when preloading or exiting */}
+            {isPreloading && (
+              <div className={`preloader-ring-inline ${isPreloaderExiting ? 'is-exiting' : ''}`}>
+                <svg className="preloader__ring-svg" viewBox="0 0 120 120" width="100%" height="100%">
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="var(--neo-black)" strokeWidth="4" opacity="0.15" />
+                  <circle
+                    cx="60" cy="60" r="52" fill="none" stroke="var(--neo-yellow)" strokeWidth="6"
+                    strokeLinecap="round" strokeDasharray="326.72"
+                    strokeDashoffset={326.72 - (preloaderProgress / 100) * 326.72}
+                    transform="rotate(-90 60 60)" className="preloader__ring-progress"
+                  />
+                </svg>
+                <span className="preloader__ring-percent">{Math.round(preloaderProgress)}</span>
+              </div>
+            )}
+
             <span className="hero-seven">7</span>
           </div>
-          <div className="hero-game-label-wrapper">
-            <span className="hero-game-label">✦ SPEED GAME ✦</span>
-          </div>
+          
+          {/* Label only visible on START */}
+          {!isPreloading && (
+            <div className="hero-game-label-wrapper">
+              <span className="hero-game-label">✦ SPEED GAME ✦</span>
+            </div>
+          )}
         </header>
       )}
 
@@ -498,18 +585,18 @@ function App() {
           </div>
         )}
 
-        {/* Fixed positioned elements — independent from layout */}
+        {/* Fixed positioned elements / Footer */}
         {screen === 'START' && (
-          <CreatorBadge isExiting={isExitingStart} />
-        )}
-        {screen === 'START' && (
-          <button 
-            className={`btn-secondary admin-btn-fixed ${isExitingStart ? 'is-exiting-fixed' : ''}`}
-            onClick={handleAdminLogin}
-            title="Panel Administratora"
-          >
-            🔒 ADMIN
-          </button>
+          <div className={`start-footer ${isExitingStart ? 'is-exiting-fixed' : ''}`}>
+            <CreatorBadge />
+            <button 
+              className="btn-secondary admin-btn"
+              onClick={handleAdminLogin}
+              title="Panel Administratora"
+            >
+              🔒 ADMIN
+            </button>
+          </div>
         )}
 
         <div 
@@ -555,7 +642,11 @@ function App() {
             >
               
               <div className="camera-inner">
-                <CameraDetector onPoseUpdate={handlePoseUpdate} />
+                <CameraDetector 
+                  onPoseUpdate={handlePoseUpdate}
+                  preloadedStream={preloadedStreamRef.current}
+                  preloadedLandmarker={preloadedLandmarkerRef.current}
+                />
                 
                 {/* Particle canvas — inside camera for clean clipping */}
                 {screen === 'PLAYING' && (
@@ -643,7 +734,11 @@ function App() {
         )}
 
         {screen === 'ADMIN' && (
-          <AdminPanel onBack={() => setScreen('START')} />
+          <AdminPanel onBack={() => {
+            setIsReturningToMenu(true);
+            setScreen('START');
+            setTimeout(() => setIsReturningToMenu(false), 1000);
+          }} />
         )}
       </main>
     </div>

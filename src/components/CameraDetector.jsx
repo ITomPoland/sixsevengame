@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
 
-export default function CameraDetector({ onPoseUpdate }) {
+export default function CameraDetector({ onPoseUpdate, preloadedStream, preloadedLandmarker }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -15,6 +15,26 @@ export default function CameraDetector({ onPoseUpdate }) {
   useEffect(() => {
     let active = true;
 
+    // If preloaded resources are available, use them directly (skips heavy init)
+    if (preloadedStream && preloadedLandmarker) {
+      poseLandmarkerRef.current = preloadedLandmarker;
+      if (videoRef.current) {
+        videoRef.current.srcObject = preloadedStream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current.play();
+          setIsLoaded(true);
+          predictWebcam();
+        };
+      }
+
+      return () => {
+        active = false;
+        if (requestRef.current) cancelAnimationFrame(requestRef.current);
+        // Don't close landmarker or stop stream here — they're managed by Preloader/App
+      };
+    }
+
+    // Fallback: self-initialize (backwards compatible)
     const initMediaPipe = async () => {
       try {
         const vision = await FilesetResolver.forVisionTasks(
@@ -74,7 +94,7 @@ export default function CameraDetector({ onPoseUpdate }) {
         videoRef.current.srcObject.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [preloadedStream, preloadedLandmarker]);
 
   const predictWebcam = () => {
     const video = videoRef.current;
