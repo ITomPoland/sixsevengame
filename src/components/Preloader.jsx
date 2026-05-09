@@ -160,12 +160,12 @@ export default function Preloader({ onReady, onProgress, onExitStart }) {
       <div className="preloader__content">
         {/* Spacer for the global 67 hero */}
         <div className="preloader__hero-spacer" />
+      </div>
 
-        {/* HORIZON LINES */}
-        <div className="horizon-lines">
-          <div className="horizon-line horizon-line--left" style={{ width: `${progress / 2}%` }} />
-          <div className="horizon-line horizon-line--right" style={{ width: `${progress / 2}%` }} />
-        </div>
+      {/* HORIZON LINES — positioned absolutely via JS-measured --pl-horizon-y */}
+      <div className="horizon-lines">
+        <div className="horizon-line horizon-line--left" style={{ width: `${progress / 2}%` }} />
+        <div className="horizon-line horizon-line--right" style={{ width: `${progress / 2}%` }} />
       </div>
 
       {/* Camera Permission Prompt */}

@@ -140,6 +140,61 @@ function App() {
     screenRef.current = screen;
   }, [screen]);
 
+  // Measure preloader positioning — compute hero offset & odometer Y from actual viewport
+  useLayoutEffect(() => {
+    if (screen === 'PRELOADING' && !isPreloaderExiting) {
+      const measurePreloader = () => {
+        const vh = window.innerHeight;
+        const vw = window.innerWidth;
+        const marqueeEl = document.querySelector('.marquee-3d-container');
+        const heroEl = document.querySelector('.hero-67');
+        if (!marqueeEl || !heroEl) return;
+
+        const marqueeH = marqueeEl.offsetHeight;
+        const available = vh - marqueeH;
+
+        // Hero natural center Y (without any CSS transform)
+        // offsetTop is unaffected by transforms
+        const headerEl = heroEl.closest('.header');
+        const heroNaturalCenterY = marqueeH + (headerEl ? heroEl.offsetTop : 0) + heroEl.offsetHeight / 2;
+
+        // Target: hero center at ~30% of available space below marquee
+        const heroTargetY = marqueeH + available * 0.30;
+        const heroOffset = Math.max(0, heroTargetY - heroNaturalCenterY);
+
+        // Scale: larger on big screens, smaller on small
+        const heroScale = vw > 768 ? 1.3 : vw > 480 ? 1.1 : 1.0;
+
+        // Target: odometer center at ~55% of available space below marquee
+        const odoTargetY = marqueeH + available * 0.55;
+
+        // Odometer slot spacing based on viewport width
+        const odoSpacing = Math.min(vw * 0.08, 112); // max ~7rem=112px
+
+        // Horizon lines Y: ~72% of available space
+        const horizonY = marqueeH + available * 0.72;
+
+        const root = document.documentElement;
+        root.style.setProperty('--pl-hero-offset', `${heroOffset}px`);
+        root.style.setProperty('--pl-hero-scale', `${heroScale}`);
+        root.style.setProperty('--pl-odo-y', `${odoTargetY}px`);
+        root.style.setProperty('--pl-odo-spacing', `${odoSpacing}px`);
+        root.style.setProperty('--pl-horizon-y', `${horizonY}px`);
+        root.style.setProperty('--pl-content-top', `${odoTargetY + available * 0.12}px`);
+      };
+
+      measurePreloader();
+      requestAnimationFrame(measurePreloader);
+      window.addEventListener('resize', measurePreloader);
+      return () => {
+        window.removeEventListener('resize', measurePreloader);
+        // Clean up CSS vars
+        const root = document.documentElement;
+        ['--pl-hero-offset','--pl-hero-scale','--pl-odo-y','--pl-odo-spacing','--pl-horizon-y','--pl-content-top'].forEach(v => root.style.removeProperty(v));
+      };
+    }
+  }, [screen, isPreloaderExiting]);
+
   // Measure Odometer targets whenever we start transitioning or enter START
   useLayoutEffect(() => {
     if (screen === 'START' || isPreloaderExiting) {
@@ -722,24 +777,89 @@ function App() {
           style={{ display: isGameplay ? 'flex' : 'none' }}
           key="gameplay"
         >
-            <div className={`stats-bar ${screen === 'PLAYING' ? 'stats-bar--playing' : ''}`}>
-              {screen === 'CALIBRATION' ? (
-                <div className="instruction-box">
-                  Zrób 5 próbnych wymachów! (Zrobiono: {calibrationCount}/5)
-                </div>
-              ) : screen === 'COUNTDOWN' ? (
-                <div className="instruction-box" style={{color: '#f59e0b'}}>
-                  Przygotuj się...
-                </div>
-              ) : (
-                <>
-                  <div className="stat">
-                    <span className="live-dot">LIVE</span>
-                    Wynik: <span key={score} className="score-punch">{score}</span>
+            <div className={`stats-bar stats-bar--${screen.toLowerCase()}`}>
+              {/* LEFT: State indicator — morphs between states */}
+              <div className="stats-bar__left">
+                {screen === 'PLAYING' ? (
+                  <span className="live-dot" key="live">LIVE</span>
+                ) : screen === 'COUNTDOWN' ? (
+                  <span className="stats-bar__state-label stats-bar__state-label--countdown" key="countdown">
+                    <span className="stats-bar__pulse-icon">⏳</span>
+                    START
+                  </span>
+                ) : (
+                  <span className="stats-bar__state-label stats-bar__state-label--calibration" key="calibration">
+                    <span className="stats-bar__pulse-icon">🎯</span>
+                    KALIBRACJA
+                  </span>
+                )}
+              </div>
+
+              {/* CENTER: Value display — morphs between counter types */}
+              <div className="stats-bar__center">
+                {screen === 'PLAYING' ? (
+                  <div className="stats-bar__value-group" key="score">
+                    <span className="stats-bar__value-label">WYNIK:</span>
+                    <span className="stats-bar__value-box">
+                      <span key={score} className="score-punch">{score}</span>
+                    </span>
                   </div>
+                ) : screen === 'COUNTDOWN' ? (
+                  <div className="stats-bar__value-group stats-bar__value-group--countdown" key="countdown">
+                    <span className="stats-bar__value-label">PRZYGOTUJ SIĘ</span>
+                  </div>
+                ) : (
+                  <div className="stats-bar__value-group" key="calibration">
+                    <span className="stats-bar__value-label">WYMACH:</span>
+                    <span className="stats-bar__value-box">
+                      <span key={calibrationCount} className="score-punch">{calibrationCount}</span>
+                    </span>
+                    <span className="stats-bar__value-total">/5</span>
+                  </div>
+                )}
+              </div>
+
+              {/* RIGHT: Ring — morphs from progress ring to timer */}
+              <div className="stats-bar__right">
+                {screen === 'PLAYING' ? (
                   <CircularTimer timeLeft={timeLeft} />
-                </>
-              )}
+                ) : (
+                  <div className="calibration-ring">
+                    <svg width="100%" height="100%" viewBox="0 0 90 90">
+                      {/* Background segments */}
+                      {[0,1,2,3,4].map(i => {
+                        const segAngle = 360 / 5;
+                        const gap = 8;
+                        const startAngle = i * segAngle - 90 + gap / 2;
+                        const endAngle = startAngle + segAngle - gap;
+                        const r = 38;
+                        const x1 = 45 + r * Math.cos(startAngle * Math.PI / 180);
+                        const y1 = 45 + r * Math.sin(startAngle * Math.PI / 180);
+                        const x2 = 45 + r * Math.cos(endAngle * Math.PI / 180);
+                        const y2 = 45 + r * Math.sin(endAngle * Math.PI / 180);
+                        const filled = i < calibrationCount;
+                        return (
+                          <path
+                            key={i}
+                            d={`M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`}
+                            fill="none"
+                            stroke={filled ? 'var(--neo-white)' : 'var(--neo-black)'}
+                            strokeWidth={filled ? '6' : '4'}
+                            strokeLinecap="round"
+                            opacity={filled ? 1 : 0.2}
+                            style={{ transition: 'stroke 0.3s ease, opacity 0.3s ease, stroke-width 0.3s ease' }}
+                          />
+                        );
+                      })}
+                      {/* Outer ring */}
+                      <circle cx="45" cy="45" r="43" fill="none" stroke="var(--neo-black)" strokeWidth="3" opacity="0.3" />
+                    </svg>
+                    <span className="calibration-ring__value">
+                      {screen === 'COUNTDOWN' ? '✓' : `${calibrationCount}`}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
             
             {/* Progress bar — always visible during gameplay to prevent layout shift */}

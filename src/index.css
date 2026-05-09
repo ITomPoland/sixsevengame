@@ -58,8 +58,8 @@ body.is-animating {
 
 .marquee-3d-container {
   width: 100%;
-  height: 56px;
-  /* Exactly 3.5rem to fit the text perfectly */
+  height: clamp(36px, 5vw + 12px, 56px);
+  /* Fluid height: scales from 36px on small screens to 56px on large */
   perspective: 1200px;
   position: relative;
   z-index: 100000;
@@ -119,9 +119,9 @@ body.is-animating {
 }
 
 .marquee-track span {
-  padding: 0 2rem;
+  padding: 0 clamp(0.8rem, 2vw, 2rem);
   font-weight: 900;
-  font-size: 1.5rem;
+  font-size: clamp(0.85rem, 1.5vw + 0.4rem, 1.5rem);
   text-transform: uppercase;
 }
 
@@ -187,7 +187,7 @@ body.is-animating {
 }
 
 .header {
-  padding: 1rem 2rem 1.5rem 2rem;
+  padding: clamp(0.5rem, 1.2vw, 1rem) clamp(1rem, 2.5vw, 2rem) clamp(0.75rem, 1.5vw, 1.5rem) clamp(1rem, 2.5vw, 2rem);
   text-align: center;
   position: relative;
   z-index: 10;
@@ -221,7 +221,8 @@ body.is-animating {
 }
 
 .header--preloading .hero-67 {
-  transform: translateY(min(18vh, 150px)) scale(1.3);
+  /* JS-measured: --pl-hero-offset is the exact px to center hero at ~30% of available viewport */
+  transform: translateY(var(--pl-hero-offset, min(18vh, 150px))) scale(var(--pl-hero-scale, 1.3));
 }
 
 .header--preloader-exiting .hero-67 {
@@ -261,18 +262,6 @@ body.is-animating {
     transform: rotate(3deg) translateY(-8px) translateX(0) scale(1);
     opacity: 1;
     filter: blur(0);
-  }
-}
-
-@media (max-width: 768px) {
-  .header--preloading .hero-67 {
-    transform: translateY(min(30vh, 200px)) scale(1.1);
-  }
-}
-
-@media (max-width: 480px) {
-  .header--preloading .hero-67 {
-    transform: translateY(min(28vh, 180px)) scale(1.0);
   }
 }
 
@@ -323,7 +312,7 @@ body.is-animating {
 }
 
 .hero-game-label-wrapper {
-  margin-top: -1.5rem;
+  margin-top: clamp(-1rem, -1.2vw, -1.5rem);
   position: relative;
   z-index: 100001;
 }
@@ -331,12 +320,12 @@ body.is-animating {
 .hero-game-label {
   display: inline-block;
   background: var(--neo-white);
-  padding: 0.4rem 1.5rem;
-  border: 3px solid var(--neo-black);
+  padding: clamp(0.25rem, 0.5vw, 0.4rem) clamp(0.8rem, 1.5vw, 1.5rem);
+  border: clamp(2px, 0.3vw, 3px) solid var(--neo-black);
   border-radius: 99px;
-  box-shadow: 4px 4px 0px var(--neo-black);
+  box-shadow: clamp(2px, 0.4vw, 4px) clamp(2px, 0.4vw, 4px) 0px var(--neo-black);
   font-family: var(--font-mono);
-  font-size: clamp(1rem, 2vw, 1.4rem);
+  font-size: clamp(0.75rem, 1.5vw + 0.2rem, 1.4rem);
   font-weight: 800;
   letter-spacing: 0.2em;
   color: var(--neo-black);
@@ -455,7 +444,7 @@ body.is-animating {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0.5rem 2rem 1rem 2rem;
+  padding: clamp(0.25rem, 0.5vw, 0.5rem) clamp(1rem, 2.5vw, 2rem) clamp(0.5rem, 1vw, 1rem) clamp(1rem, 2.5vw, 2rem);
   position: relative;
   z-index: 2;
   overflow: visible;
@@ -570,14 +559,15 @@ p {
 /* Start Footer for Creator Badge & Admin Button */
 .start-footer {
   position: fixed;
-  bottom: 24px;
-  left: 24px;
-  right: 24px;
+  top: clamp(60px, 5vw + 40px, 80px);
+  /* top offset accounts for marquee height */
+  left: clamp(12px, 2vw, 24px);
+  right: clamp(12px, 2vw, 24px);
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: flex-start;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 100002;
 }
 
 .start-footer > * {
@@ -589,9 +579,9 @@ p {
 }
 
 .admin-btn {
-  font-size: 1rem !important;
-  padding: 0.5rem 1rem !important;
-  box-shadow: 4px 4px 0px var(--neo-black) !important;
+  font-size: clamp(0.8rem, 1.2vw + 0.3rem, 1rem) !important;
+  padding: clamp(0.35rem, 0.8vw, 0.5rem) clamp(0.6rem, 1.2vw, 1rem) !important;
+  box-shadow: clamp(2px, 0.4vw, 4px) clamp(2px, 0.4vw, 4px) 0px var(--neo-black) !important;
   width: auto !important;
 }
 
@@ -820,17 +810,51 @@ p {
   overflow: visible;
 }
 
+/* ============================================
+   STATS BAR — Unified Morphing Container
+   3-column layout: [indicator] [value] [ring]
+   ============================================ */
+
 .stats-bar {
   display: flex;
-  justify-content: space-around;
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
   background: var(--neo-yellow);
   border: var(--border-width) solid var(--neo-black);
-  padding: 1rem 2rem;
-  border-radius: 16px;
-  margin-bottom: 2rem;
+  padding: clamp(0.6rem, 1.2vw, 1rem) clamp(1rem, 2vw, 2rem);
+  border-radius: 16px 16px 0 0;
+  /* Diegetic: no margin-bottom, connected to camera */
+  margin-bottom: 0;
   box-shadow: 6px 6px 0px var(--neo-black);
   animation: statsBarDropIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  /* Fixed height prevents layout shift between states */
+  min-height: clamp(70px, 10vw, 96px);
+  /* Smooth background morph between states */
+  transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+  position: relative;
+  z-index: 2;
+  gap: clamp(0.5rem, 1vw, 1rem);
+}
+
+/* State-specific background colors */
+.stats-bar--calibration {
+  background: var(--neo-green);
+}
+
+.stats-bar--countdown {
+  background: #ffb347;
+  animation: statsBarDropIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both,
+             countdownPulse 1.2s ease-in-out infinite;
+}
+
+.stats-bar--playing {
+  background: var(--neo-yellow);
+}
+
+@keyframes countdownPulse {
+  0%, 100% { box-shadow: 6px 6px 0px var(--neo-black); }
+  50% { box-shadow: 6px 6px 0px var(--neo-black), 0 0 20px rgba(245, 158, 11, 0.4); }
 }
 
 @keyframes statsBarDropIn {
@@ -839,7 +863,6 @@ p {
     opacity: 0;
     filter: blur(4px);
   }
-
   100% {
     transform: translateY(0) rotate(0deg);
     opacity: 1;
@@ -847,40 +870,66 @@ p {
   }
 }
 
-.stat {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--neo-black);
-  text-transform: uppercase;
-  display: flex;
+/* --- LEFT column: state indicator --- */
+.stats-bar__left {
+  flex-shrink: 0;
+  min-width: clamp(60px, 10vw, 120px);
+}
+
+.stats-bar__state-label {
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-}
-
-.stat span {
+  gap: 0.3rem;
   font-family: var(--font-mono);
-  font-size: 3rem;
-  font-weight: 900;
+  font-size: clamp(0.55rem, 0.8vw + 0.2rem, 0.75rem);
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
   color: var(--neo-black);
-  margin-left: 0.5rem;
   background: var(--neo-white);
-  padding: 0 1rem;
-  border: 3px solid var(--neo-black);
-  border-radius: 8px;
-  display: inline-block;
+  padding: clamp(0.25rem, 0.5vw, 0.4rem) clamp(0.4rem, 0.8vw, 0.8rem);
+  border: 2px solid var(--neo-black);
+  border-radius: 6px;
+  animation: labelEntry 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
 }
 
-/* LIVE indicator dot */
+.stats-bar__state-label--countdown {
+  color: var(--neo-white);
+  background: var(--neo-black);
+  border-color: var(--neo-black);
+}
+
+@keyframes labelEntry {
+  0% { transform: scale(0.7) rotate(-5deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.stats-bar__pulse-icon {
+  display: inline-block;
+  animation: iconPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* LIVE indicator dot — matches left column */
 .live-dot {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: clamp(0.55rem, 0.8vw + 0.2rem, 0.75rem);
   font-weight: 800;
   letter-spacing: 2px;
-  color: var(--neo-pink);
+  color: var(--neo-white);
   text-transform: uppercase;
+  background: var(--neo-black);
+  padding: clamp(0.25rem, 0.5vw, 0.4rem) clamp(0.4rem, 0.8vw, 0.8rem);
+  border: 2px solid var(--neo-black);
+  border-radius: 6px;
+  animation: labelEntry 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
 }
 
 .live-dot::before {
@@ -893,30 +942,104 @@ p {
 }
 
 @keyframes livePulse {
-
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.4;
-    transform: scale(0.8);
-  }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
 }
 
-.instruction-box {
-  font-size: 1.5rem;
+/* --- CENTER column: value display --- */
+.stats-bar__center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.stats-bar__value-group {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.3rem, 0.5vw, 0.5rem);
+  animation: valueEntry 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+@keyframes valueEntry {
+  0% { transform: translateY(8px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.stats-bar__value-label {
+  font-family: var(--font-heading);
+  font-size: clamp(0.8rem, 1.2vw + 0.2rem, 1.3rem);
   font-weight: 800;
   color: var(--neo-black);
-  background: var(--neo-green);
-  padding: 1rem 2rem;
-  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stats-bar__value-box {
+  font-family: var(--font-mono);
+  font-size: clamp(1.5rem, 3vw, 2.8rem);
+  font-weight: 900;
+  color: var(--neo-black);
+  background: var(--neo-white);
+  padding: 0 clamp(0.5rem, 1vw, 1rem);
   border: 3px solid var(--neo-black);
-  box-shadow: 4px 4px 0px var(--neo-black);
-  display: inline-block;
-  transform: rotate(-1deg);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: clamp(2rem, 4vw, 3.5rem);
+  line-height: 1.2;
+}
+
+.stats-bar__value-total {
+  font-family: var(--font-mono);
+  font-size: clamp(1.2rem, 2vw, 2rem);
+  font-weight: 800;
+  color: var(--neo-black);
+  opacity: 0.5;
+}
+
+.stats-bar__value-group--countdown .stats-bar__value-label {
+  font-size: clamp(1rem, 1.5vw + 0.3rem, 1.6rem);
+  letter-spacing: 0.15em;
+  color: var(--neo-white);
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.3);
+  animation: countdownTextPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes countdownTextPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* --- RIGHT column: ring/timer --- */
+.stats-bar__right {
+  flex-shrink: 0;
+  width: clamp(56px, 8vw, 90px);
+  height: clamp(56px, 8vw, 90px);
+}
+
+.calibration-ring {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calibration-ring__value {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: clamp(1.2rem, 2vw, 2rem);
+  font-weight: 900;
+  color: var(--neo-black);
+  z-index: 1;
+}
+
+/* Override circular timer size to match ring column */
+.stats-bar__right .circular-timer {
+  width: 100%;
+  height: 100%;
 }
 
 /* HIGH END JUICE ANIMATIONS */
@@ -958,6 +1081,20 @@ p {
 
 .camera-bump {
   animation: cameraBump 0.15s ease-out;
+}
+
+/* Instruction box — used in start screen warning card */
+.instruction-box {
+  font-size: clamp(0.9rem, 1.2vw + 0.2rem, 1.3rem);
+  font-weight: 800;
+  color: var(--neo-black);
+  background: var(--neo-green);
+  padding: clamp(0.7rem, 1.2vw, 1rem) clamp(1rem, 2vw, 2rem);
+  border-radius: 12px;
+  border: 3px solid var(--neo-black);
+  box-shadow: 4px 4px 0px var(--neo-black);
+  display: inline-block;
+  transform: rotate(-1deg);
 }
 
 /* ============================
@@ -1321,20 +1458,28 @@ p {
 
 .fire-mode .stats-bar {
   background: var(--neo-black);
-  color: var(--neo-green);
   border-color: var(--neo-green);
   box-shadow: 6px 6px 0px var(--neo-green);
   transition: all 0.5s ease;
 }
 
-.fire-mode .stat {
+.fire-mode .stats-bar__value-label {
   color: var(--neo-green);
 }
 
-.fire-mode .stat span {
+.fire-mode .stats-bar__value-box {
   color: var(--neo-green);
   background: var(--neo-black);
   border-color: var(--neo-green);
+}
+
+.fire-mode .stats-bar__value-total {
+  color: var(--neo-green);
+  opacity: 0.7;
+}
+
+.fire-mode .calibration-ring__value {
+  color: var(--neo-green);
 }
 
 /* ============================
@@ -1820,10 +1965,6 @@ p {
     font-size: 2.5rem;
   }
 
-  .instruction-box {
-    font-size: 1rem;
-    padding: 0.8rem 1rem;
-  }
 
   .camera-container {
     border-radius: 12px;
@@ -1979,12 +2120,12 @@ p {
 .creator-badge {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: clamp(0.4rem, 0.8vw, 0.8rem);
   background: var(--neo-white);
-  border: 3px solid var(--neo-black);
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
-  box-shadow: 4px 4px 0px var(--neo-black);
+  border: clamp(2px, 0.3vw, 3px) solid var(--neo-black);
+  border-radius: clamp(8px, 1.2vw, 12px);
+  padding: clamp(0.4rem, 0.8vw, 0.75rem) clamp(0.5rem, 1vw, 1rem);
+  box-shadow: clamp(2px, 0.4vw, 4px) clamp(2px, 0.4vw, 4px) 0px var(--neo-black);
   transform: rotate(-3deg);
   text-decoration: none;
   color: var(--neo-black);
@@ -2017,10 +2158,10 @@ p {
 }
 
 .creator-badge__avatar-wrap {
-  width: 64px;
-  height: 64px;
+  width: clamp(32px, 5vw, 64px);
+  height: clamp(32px, 5vw, 64px);
   border: 2px solid var(--neo-black);
-  border-radius: 8px;
+  border-radius: clamp(4px, 0.6vw, 8px);
   overflow: hidden;
   background: var(--neo-yellow);
   flex-shrink: 0;
@@ -2057,9 +2198,9 @@ p {
 
 .creator-badge__label {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: clamp(0.45rem, 0.6vw + 0.15rem, 0.65rem);
   font-weight: 800;
-  letter-spacing: 2px;
+  letter-spacing: clamp(1px, 0.2vw, 2px);
   text-transform: uppercase;
   opacity: 0.6;
   line-height: 1;
@@ -2067,7 +2208,7 @@ p {
 
 .creator-badge__name {
   font-family: var(--font-heading);
-  font-size: 1.5rem;
+  font-size: clamp(0.9rem, 1.3vw + 0.3rem, 1.5rem);
   font-weight: 900;
   line-height: 1.1;
   letter-spacing: -0.5px;
@@ -2447,16 +2588,7 @@ p {
   border-radius: 50%;
 }
 
-/* ============================
-   STATS BAR LAYOUT UPDATE
-   ============================ */
-
-.stats-bar--playing {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
+/* Stats bar layout is now unified in base styles */
 
 /* ============================
    RESPONSIVE FOR NEW ELEMENTS
@@ -2470,28 +2602,18 @@ p {
     gap: 1rem;
     padding: 0;
     margin-top: 2rem;
+    /* Reset top from desktop */
+    top: auto;
   }
 
   .creator-badge {
     width: 100%;
     justify-content: center;
-    padding: 0.4rem 0.6rem;
   }
 
   .admin-btn {
     width: 100% !important;
     text-align: center;
-    padding: 0.8rem 1.5rem !important;
-    font-size: 1.2rem !important;
-  }
-
-  .creator-badge__avatar-wrap {
-    width: 36px;
-    height: 36px;
-  }
-
-  .creator-badge__name {
-    font-size: 1rem;
   }
 
   .creator-badge__qr {
@@ -2523,24 +2645,6 @@ p {
   .hero-seven {
     font-size: clamp(4rem, 25vw, 7rem);
     -webkit-text-stroke: 2px var(--neo-black);
-  }
-
-  .creator-badge {
-    gap: 0.4rem;
-    padding: 0.3rem 0.5rem;
-  }
-
-  .creator-badge__avatar-wrap {
-    width: 30px;
-    height: 30px;
-  }
-
-  .creator-badge__name {
-    font-size: 0.85rem;
-  }
-
-  .creator-badge__label {
-    font-size: 0.45rem;
   }
 }
 
@@ -2580,14 +2684,15 @@ p {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  /* top padding: hero translateY + hero height at scale + breathing room */
-  padding: calc(min(18vh, 150px) + 24vh) 2rem 3vh 2rem;
+  justify-content: flex-end;
+  /* JS-measured: --pl-content-top positions content below the odometer */
+  padding: 0 clamp(1rem, 3vw, 2rem) clamp(3vh, 5vh, 8vh) clamp(1rem, 3vw, 2rem);
   position: relative;
   z-index: 2;
-  gap: clamp(1rem, 2.5vh, 2rem);
+  gap: clamp(0.75rem, 2.5vh, 2rem);
   max-height: 100vh;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* ============================
@@ -2740,17 +2845,17 @@ p {
   will-change: transform;
 }
 
-/* === PRELOADING STATE: slots centered below hero, side by side === */
+/* === PRELOADING STATE: JS-measured positions via custom properties === */
 .odometer-global--preloading .odometer__slot--left {
-  transform: translate(calc(50vw - clamp(4rem, 9vw, 7rem) - 50%), calc(min(18vh, 150px) + 38vh - 50%));
+  transform: translate(calc(50vw - var(--pl-odo-spacing, 7rem) - 50%), calc(var(--pl-odo-y, 55vh) - 50%));
 }
 
 .odometer-global--preloading .odometer__slot--center {
-  transform: translate(calc(50vw - 50%), calc(min(18vh, 150px) + 38vh - 50%));
+  transform: translate(calc(50vw - 50%), calc(var(--pl-odo-y, 55vh) - 50%));
 }
 
 .odometer-global--preloading .odometer__slot--right {
-  transform: translate(calc(50vw + clamp(4rem, 9vw, 7rem) - 50%), calc(min(18vh, 150px) + 38vh - 50%));
+  transform: translate(calc(50vw + var(--pl-odo-spacing, 7rem) - 50%), calc(var(--pl-odo-y, 55vh) - 50%));
 }
 
 /* === START STATE: each slot flies to its card position === */
@@ -2944,13 +3049,13 @@ p {
 /* Removed pointer-events: auto on wrapper so it doesn't block Admin button. Children handle it individually. */
 
 .odometer__slot {
-  width: clamp(3rem, 7vw, 5.5rem);
-  height: clamp(3.8rem, 9vw, 7rem);
+  width: clamp(2.8rem, 6vw + 0.5rem, 5.5rem);
+  height: clamp(3.5rem, 8vw + 0.5rem, 7rem);
   overflow: hidden;
   background: var(--neo-white);
   border: var(--border-width) solid var(--neo-black);
-  border-radius: 10px;
-  box-shadow: 6px 6px 0px var(--neo-black);
+  border-radius: clamp(6px, 1vw, 10px);
+  box-shadow: clamp(3px, 0.5vw, 6px) clamp(3px, 0.5vw, 6px) 0px var(--neo-black);
   position: relative;
   contain: layout paint style;
   will-change: transform, width, height, border-radius;
@@ -2965,12 +3070,12 @@ p {
 
 .odometer__digit {
   width: 100%;
-  height: clamp(3.8rem, 9vw, 7rem);
+  height: clamp(3.5rem, 8vw + 0.5rem, 7rem);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  font-size: clamp(2.2rem, 6vw, 4.5rem);
+  font-size: clamp(2rem, 5vw + 0.5rem, 4.5rem);
   font-weight: 900;
   color: var(--neo-black);
   line-height: 1;
@@ -3015,14 +3120,19 @@ p {
   justify-content: center;
   align-items: center;
   width: 100%;
-  max-width: 600px;
+  max-width: clamp(280px, 60vw, 600px);
   gap: 0;
-  height: 6px;
-  position: relative;
+  height: clamp(4px, 0.6vw, 6px);
+  /* JS-measured positioning via --pl-horizon-y */
+  position: absolute;
+  top: var(--pl-horizon-y, 72vh);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
 }
 
 .horizon-line {
-  height: 3px;
+  height: clamp(2px, 0.3vw, 3px);
   transition: width 0.5s cubic-bezier(0.23, 1, 0.32, 1);
   will-change: width;
   border-radius: 2px;
@@ -3088,10 +3198,10 @@ p {
 .preloader__camera-card {
   background: var(--neo-green);
   border: var(--border-width) solid var(--neo-black);
-  border-radius: 16px;
-  padding: 2rem 2.5rem;
-  box-shadow: 8px 8px 0px var(--neo-black);
-  max-width: 480px;
+  border-radius: clamp(10px, 1.5vw, 16px);
+  padding: clamp(1rem, 2.5vw, 2rem) clamp(1.2rem, 3vw, 2.5rem);
+  box-shadow: clamp(4px, 0.8vw, 8px) clamp(4px, 0.8vw, 8px) 0px var(--neo-black);
+  max-width: min(480px, 90vw);
   width: 100%;
   text-align: center;
   position: relative;
@@ -3136,8 +3246,8 @@ p {
 }
 
 .preloader__camera-icon {
-  font-size: 3.5rem;
-  margin-bottom: 0.5rem;
+  font-size: clamp(2.5rem, 4vw + 1rem, 3.5rem);
+  margin-bottom: clamp(0.3rem, 0.5vw, 0.5rem);
   animation: cameraIconBounce 2s ease-in-out infinite;
 }
 
@@ -3169,16 +3279,16 @@ p {
 }
 
 .preloader__camera-desc {
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 1vw + 0.3rem, 1rem);
   font-weight: 600;
   color: var(--neo-black);
   line-height: 1.5;
-  margin-bottom: 1.5rem;
+  margin-bottom: clamp(1rem, 1.5vw, 1.5rem);
 }
 
 .preloader__camera-btn {
-  font-size: 1.3rem !important;
-  padding: 0.9rem 2.5rem !important;
+  font-size: clamp(1rem, 1.3vw + 0.3rem, 1.3rem) !important;
+  padding: clamp(0.6rem, 1vw, 0.9rem) clamp(1.5rem, 2.5vw, 2.5rem) !important;
 }
 
 /* Camera Denied Steps */
@@ -3224,16 +3334,16 @@ p {
 
 .preloader__footer-label {
   position: absolute;
-  bottom: 2rem;
+  bottom: clamp(1rem, 2.5vh, 2rem);
   left: 50%;
   transform: translateX(-50%);
 }
 
 .preloader__made-by {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: clamp(0.5rem, 0.7vw + 0.2rem, 0.7rem);
   font-weight: 800;
-  letter-spacing: 3px;
+  letter-spacing: clamp(1.5px, 0.3vw, 3px);
   text-transform: uppercase;
   color: var(--neo-black);
   opacity: 0.4;
@@ -3245,10 +3355,6 @@ p {
    ============================ */
 
 @media (max-width: 768px) {
-  .preloader__camera-card {
-    padding: 1.5rem;
-  }
-
   .phase-tags {
     max-width: 90vw;
   }
@@ -3260,19 +3366,6 @@ p {
 }
 
 @media (max-width: 480px) {
-  .preloader__camera-card {
-    padding: 1rem;
-  }
-
-  .preloader__camera-title {
-    font-size: 1.3rem;
-  }
-
-  .preloader__camera-btn {
-    font-size: 1rem !important;
-    padding: 0.7rem 1.5rem !important;
-  }
-
   .preloader__step {
     font-size: 0.85rem;
     padding: 0.5rem 0.8rem;
@@ -3304,17 +3397,8 @@ p {
   }
 
   .stats-bar {
-    margin-bottom: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    border-radius: 10px;
+    border-radius: 10px 10px 0 0;
     box-shadow: 4px 4px 0px var(--neo-black);
-  }
-
-  .stats-bar--playing {
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    gap: 0.5rem;
   }
 
   .countdown-overlay {
@@ -3446,48 +3530,8 @@ p {
   }
 
   .stats-bar {
-    padding: 0.4rem 0.5rem;
-    border-radius: 8px;
-    margin-bottom: 0.25rem;
+    border-radius: 8px 8px 0 0;
     box-shadow: 3px 3px 0px var(--neo-black);
-  }
-
-  .stats-bar--playing {
-    gap: 0.25rem;
-  }
-
-  .stat {
-    font-size: 1rem;
-    gap: 0.25rem;
-  }
-
-  .stat span {
-    font-size: 1.5rem;
-    padding: 0 0.4rem;
-  }
-
-  .live-dot {
-    font-size: 0.55rem;
-  }
-
-  .instruction-box {
-    font-size: 0.85rem;
-    padding: 0.5rem 0.75rem;
-    box-shadow: 3px 3px 0px var(--neo-black);
-  }
-
-  .circular-timer {
-    width: 55px;
-    height: 55px;
-  }
-
-  .circular-timer__svg {
-    width: 55px;
-    height: 55px;
-  }
-
-  .circular-timer__value {
-    font-size: 1.2rem;
   }
 
   .progress-wrapper {
@@ -3687,30 +3731,22 @@ p {
     letter-spacing: 2px;
   }
 
-  /* Marquee */
-  .marquee-3d-container {
-    height: 40px;
-  }
-
+  /* Marquee — font/padding now handled by fluid clamp() in base styles.
+     3D transforms need half-height for translateZ: at 480px, clamp gives ~36px → Z≈18px */
   .marquee-3d-drum {
-    transform: translateZ(-20px) rotateX(0deg);
+    transform: translateZ(-18px) rotateX(0deg);
   }
 
   .marquee-3d-drum.is-flipped {
-    transform: translateZ(-20px) rotateX(90deg);
+    transform: translateZ(-18px) rotateX(90deg);
   }
 
   .marquee-face--front {
-    transform: rotateX(0deg) translateZ(20px);
+    transform: rotateX(0deg) translateZ(18px);
   }
 
   .marquee-face--bottom {
-    transform: rotateX(-90deg) translateZ(20px);
-  }
-
-  .marquee-track span {
-    padding: 0 1rem;
-    font-size: 0.9rem;
+    transform: rotateX(-90deg) translateZ(18px);
   }
 
   /* Header */
@@ -3807,10 +3843,5 @@ p {
 
   .marquee-3d-container {
     height: 32px;
-  }
-
-  .marquee-track span {
-    font-size: 0.8rem;
-    padding: 0 0.8rem;
   }
 }
