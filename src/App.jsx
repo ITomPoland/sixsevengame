@@ -179,10 +179,12 @@ function App() {
     if (isPreloaderExiting) {
       const timer = setTimeout(() => setSlotsRevealed(true), 800);
       return () => clearTimeout(timer);
+    } else if (screen === 'START' && isReturningToMenu) {
+      setSlotsRevealed(true);
     } else if (screen !== 'START') {
       setSlotsRevealed(false);
     }
-  }, [isPreloaderExiting, screen]);
+  }, [isPreloaderExiting, screen, isReturningToMenu]);
 
   useEffect(() => {
     scoreRef.current = score;
@@ -608,7 +610,7 @@ function App() {
         const digits = getDigits(preloaderProgress);
         const isDone = preloaderProgress >= 100;
         return (
-          <div className={`odometer-global ${isPreloading ? 'odometer-global--preloading' : ''} ${screen === 'START' ? 'odometer-global--start' : ''} ${isPreloaderExiting ? 'odometer-global--transitioning' : ''} ${isDone ? 'odometer--done' : ''} ${slotsRevealed ? 'odometer-global--revealed' : ''}`}>
+          <div className={`odometer-global ${isPreloading ? 'odometer-global--preloading' : ''} ${screen === 'START' ? 'odometer-global--start' : ''} ${isPreloaderExiting ? 'odometer-global--transitioning' : ''} ${isExitingStart ? 'odometer-global--exiting' : ''} ${isReturningToMenu ? 'odometer-global--returning' : ''} ${isDone ? 'odometer--done' : ''} ${slotsRevealed ? 'odometer-global--revealed' : ''}`}>
             <div 
               className="odometer__slot odometer__slot--left"
               style={{

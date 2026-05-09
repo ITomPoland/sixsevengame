@@ -585,7 +585,7 @@ p {
 }
 
 .start-footer.is-exiting-fixed {
-  animation: fixedExit 0.5s ease forwards;
+  animation: brutalistCardExit 0.4s cubic-bezier(0.75, 0, 0.25, 1) forwards;
 }
 
 .admin-btn {
@@ -2151,12 +2151,11 @@ p {
   animation: brutalistHeroExit 0.5s cubic-bezier(0.75, 0, 0.25, 1) forwards;
 }
 
-.is-exiting .start-card {
-  animation: brutalistCardExit 0.4s cubic-bezier(0.75, 0, 0.25, 1) forwards;
-}
-
+.is-exiting .start-card,
 .is-exiting .leaderboard-container {
-  animation: brutalistCardExit 0.4s cubic-bezier(0.75, 0, 0.25, 1) 0.1s forwards;
+  opacity: 0 !important;
+  visibility: hidden;
+  animation: none !important;
 }
 
 .is-exiting-fixed {
@@ -2777,6 +2776,108 @@ p {
   background: var(--neo-white);
 }
 
+/* === EXIT ANIMATION (START -> GAME) === */
+.odometer-global--exiting .odometer__slot--left {
+  animation: slotExitLeft 0.4s cubic-bezier(0.75, 0, 0.25, 1) forwards;
+}
+.odometer-global--exiting .odometer__slot--center {
+  animation: slotExitCenter 0.4s cubic-bezier(0.75, 0, 0.25, 1) 0.05s forwards;
+}
+.odometer-global--exiting .odometer__slot--right {
+  animation: slotExitRight 0.4s cubic-bezier(0.75, 0, 0.25, 1) 0.1s forwards;
+}
+
+@keyframes slotExitLeft {
+  from {
+    transform: translate(calc(var(--target-x, 25vw) - 50%), calc(var(--target-y, 50vh) - 50%));
+    opacity: 1;
+  }
+  to { 
+    transform: translate(calc(var(--target-x, 25vw) - 50% - 150px), calc(var(--target-y, 50vh) - 50% + 50px)) rotate(-15deg) scale(0.8);
+    opacity: 0; 
+    filter: blur(4px);
+  }
+}
+
+@keyframes slotExitCenter {
+  from {
+    transform: translate(calc(var(--target-x, 50vw) - 50%), calc(var(--target-y, 110px) - 50%)) rotate(-3deg);
+    opacity: 1;
+  }
+  to { 
+    transform: translate(calc(var(--target-x, 50vw) - 50%), calc(var(--target-y, 110px) - 50% - 40px)) rotate(-3deg) scale(0.9);
+    opacity: 0; 
+    filter: blur(4px);
+  }
+}
+
+@keyframes slotExitRight {
+  from {
+    transform: translate(calc(var(--target-x, 75vw) - 50%), calc(var(--target-y, 50vh) - 50%));
+    opacity: 1;
+  }
+  to { 
+    transform: translate(calc(var(--target-x, 75vw) - 50% + 150px), calc(var(--target-y, 50vh) - 50% + 50px)) rotate(15deg) scale(0.8);
+    opacity: 0; 
+    filter: blur(4px);
+  }
+}
+
+/* === RETURN ANIMATION (RESULT -> START) === */
+.odometer-global--returning .odometer__slot--left {
+  animation: slotReturnLeft 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+.odometer-global--returning .odometer__slot--center {
+  animation: slotReturnCenter 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s both;
+}
+.odometer-global--returning .odometer__slot--right {
+  animation: slotReturnRight 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s both;
+}
+
+/* Hide the green curtain animation during return */
+.odometer-global--returning .odometer__slot::after {
+  display: none !important;
+}
+
+@keyframes slotReturnLeft {
+  from { 
+    transform: translate(calc(var(--target-x, 25vw) - 50% - 150px), calc(var(--target-y, 50vh) - 50% + 100px)) rotate(-25deg) scale(0.8);
+    opacity: 0; 
+    filter: blur(8px);
+  }
+  to { 
+    transform: translate(calc(var(--target-x, 25vw) - 50%), calc(var(--target-y, 50vh) - 50%));
+    opacity: 1; 
+    filter: blur(0);
+  }
+}
+
+@keyframes slotReturnCenter {
+  from { 
+    transform: translate(calc(var(--target-x, 50vw) - 50%), calc(var(--target-y, 110px) - 50% - 40px)) rotate(-10deg) scale(0.85);
+    opacity: 0; 
+    filter: blur(8px);
+  }
+  to { 
+    transform: translate(calc(var(--target-x, 50vw) - 50%), calc(var(--target-y, 110px) - 50%)) rotate(-3deg) scale(1);
+    opacity: 1; 
+    filter: blur(0);
+  }
+}
+
+@keyframes slotReturnRight {
+  from { 
+    transform: translate(calc(var(--target-x, 75vw) - 50% + 150px), calc(var(--target-y, 50vh) - 50% + 100px)) rotate(25deg) scale(0.8);
+    opacity: 0; 
+    filter: blur(8px);
+  }
+  to { 
+    transform: translate(calc(var(--target-x, 75vw) - 50%), calc(var(--target-y, 50vh) - 50%));
+    opacity: 1; 
+    filter: blur(0);
+  }
+}
+
 /* Ukrycie cyfr na ekranie głównym - kwadraciki stają się puste */
 .odometer-global--transitioning .odometer__digit-track,
 .odometer-global--start .odometer__digit-track {
@@ -2840,10 +2941,7 @@ p {
 
 
 
-/* Enable pointer-events on slots after reveal */
-.odometer-global--revealed {
-  pointer-events: auto;
-}
+/* Removed pointer-events: auto on wrapper so it doesn't block Admin button. Children handle it individually. */
 
 .odometer__slot {
   width: clamp(3rem, 7vw, 5.5rem);
