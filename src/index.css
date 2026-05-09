@@ -200,7 +200,6 @@ body.is-animating {
 .hero-67 {
   display: flex;
   align-items: center;
-  /* center to accommodate the ring vertically */
   justify-content: center;
   gap: 0;
   margin: 0;
@@ -208,10 +207,9 @@ body.is-animating {
   user-select: none;
   position: relative;
   z-index: 100000;
-  /* stays on top of preloader */
   transform: translateY(0) scale(1);
-  will-change: transform, gap;
-  transition: transform 0.9s cubic-bezier(0.75, 0, 0.25, 1), gap 0.9s cubic-bezier(0.75, 0, 0.25, 1);
+  will-change: transform;
+  transition: transform 0.9s cubic-bezier(0.75, 0, 0.25, 1);
 }
 
 .header--preloading,
@@ -223,14 +221,11 @@ body.is-animating {
 }
 
 .header--preloading .hero-67 {
-  transform: translateY(min(32vh, 250px)) scale(1.3);
-  gap: clamp(70px, 15vw, 160px);
-  /* space for the progress ring */
+  transform: translateY(min(18vh, 150px)) scale(1.3);
 }
 
 .header--preloader-exiting .hero-67 {
   transform: translateY(0) scale(1) !important;
-  gap: 0 !important;
 }
 
 .header.header--returning .hero-67 .hero-six {
@@ -281,49 +276,7 @@ body.is-animating {
   }
 }
 
-.preloader-ring-inline {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  /* perfectly centered between 6 and 7 */
-  width: clamp(52.5px, 11.25vw, 120px);
-  height: clamp(52.5px, 11.25vw, 120px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: ringEntryInline 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.4s both;
-  pointer-events: none;
-}
 
-.preloader-ring-inline.is-exiting {
-  animation: preloaderRingInlineExit 0.5s cubic-bezier(0.75, 0, 0.25, 1) forwards !important;
-}
-
-@keyframes ringEntryInline {
-  0% {
-    transform: translate(-50%, -50%) scale(0) rotate(-90deg);
-    opacity: 0;
-  }
-
-  100% {
-    transform: translate(-50%, -50%) scale(1) rotate(0deg);
-    opacity: 1;
-  }
-}
-
-@keyframes preloaderRingInlineExit {
-  0% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translate(-50%, -50%) scale(2.5);
-    opacity: 0;
-    filter: blur(10px);
-  }
-}
 
 .hero-six,
 .hero-seven {
@@ -382,14 +335,14 @@ body.is-animating {
   border: 3px solid var(--neo-black);
   border-radius: 99px;
   box-shadow: 4px 4px 0px var(--neo-black);
-  transform: rotate(-2deg);
   font-family: var(--font-mono);
   font-size: clamp(1rem, 2vw, 1.4rem);
   font-weight: 800;
   letter-spacing: 0.2em;
   color: var(--neo-black);
+  /* Ghost: always invisible, only for measurement */
   opacity: 0;
-  animation: labelFadeIn 0.5s ease 0.5s forwards;
+  pointer-events: none;
 }
 
 @keyframes heroSixEntry {
@@ -655,9 +608,11 @@ p {
 .start-card {
   flex: 2;
   background: var(--neo-pink);
-  /* Cute-alism stickers inside start card */
   position: relative;
-  animation: brutalistCardDrop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s both;
+  min-height: 500px;
+  /* Ghost: always invisible, only for measurement */
+  opacity: 0;
+  pointer-events: none;
 }
 
 @keyframes brutalistCardDrop {
@@ -686,7 +641,9 @@ p {
   box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--neo-black);
   position: relative;
   overflow: visible;
-  animation: brutalistLeaderboardDrop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.25s both;
+  /* Ghost: always invisible, only for measurement */
+  opacity: 0;
+  pointer-events: none;
 }
 
 @keyframes brutalistLeaderboardDrop {
@@ -794,6 +751,56 @@ p {
 .char-slot.char-filled {
   color: var(--neo-black);
   background: var(--neo-yellow);
+}
+
+.char-slot.char-active {
+  border-color: var(--neo-pink);
+  box-shadow: 4px 4px 0px var(--neo-black), 0 0 0 2px var(--neo-pink);
+  animation: slotPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes slotPulse {
+  0%, 100% { box-shadow: 4px 4px 0px var(--neo-black), 0 0 0 2px var(--neo-pink); }
+  50% { box-shadow: 4px 4px 0px var(--neo-black), 0 0 8px 3px rgba(255, 0, 160, 0.5); }
+}
+
+/* Hidden input for mobile keyboard trigger */
+.name-hidden-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  /* Keep it in the DOM flow for focus but invisible */
+}
+
+/* GDPR consent box */
+.consent-box {
+  margin-top: 1.5rem;
+  text-align: left;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 1rem;
+  border: 2px solid var(--neo-black);
+  border-radius: 8px;
+}
+
+.consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.consent-checkbox {
+  margin-top: 3px;
+  transform: scale(1.2);
+  accent-color: var(--neo-pink);
+  flex-shrink: 0;
 }
 
 .arcade-btn:disabled {
@@ -2322,9 +2329,21 @@ p {
   animation: brutalistNameExit 0.5s cubic-bezier(0.75, 0, 0.25, 1) forwards !important;
 }
 
-/* PROGRESS BAR ENTRANCE */
+/* PROGRESS BAR ENTRANCE + base layout (moved from inline styles) */
 .progress-wrapper {
+  width: 100%;
+  max-width: 640px;
+  margin-bottom: 0.5rem;
+  min-height: 52px;
   animation: cameraDropIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s both;
+}
+
+/* Camera wrapper base layout (moved from inline styles) */
+.camera-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  overflow: visible;
 }
 
 /* ============================
@@ -2343,6 +2362,14 @@ p {
   filter: url(#grain-filter);
   background: white;
   mix-blend-mode: multiply;
+  will-change: transform;
+}
+
+/* Hide noise on mobile — too expensive for mobile GPUs */
+@media (max-width: 768px) {
+  .noise-overlay {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2527,7 +2554,6 @@ p {
   inset: 0;
   z-index: 99999;
   background-color: var(--neo-bg);
-  /* Same paper texture as body */
   background-image:
     radial-gradient(var(--neo-black) 0.8px, transparent 0.8px),
     linear-gradient(45deg, transparent 48%, rgba(17, 17, 17, 0.02) 49%, rgba(17, 17, 17, 0.02) 51%, transparent 52%),
@@ -2535,8 +2561,7 @@ p {
   background-size: 24px 24px, 20px 20px, 20px 20px;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 /* Film grain inside preloader */
@@ -2550,17 +2575,20 @@ p {
   mix-blend-mode: multiply;
 }
 
-/* Main content area */
+/* Main content area — fills viewport below hero, no scroll */
 .preloader__content {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: calc(min(32vh, 250px) + 30px) 2rem 6rem 2rem;
+  justify-content: center;
+  /* top padding: hero translateY + hero height at scale + breathing room */
+  padding: calc(min(18vh, 150px) + 24vh) 2rem 3vh 2rem;
   position: relative;
   z-index: 2;
-  gap: 2rem;
+  gap: clamp(1rem, 2.5vh, 2rem);
+  max-height: 100vh;
+  box-sizing: border-box;
 }
 
 /* ============================
@@ -2683,182 +2711,263 @@ p {
   }
 }
 
-/* ============================
-   CIRCULAR PROGRESS RING
-   ============================ */
+/* ============================================
+   ODOMETER — Shared Global Element
+   Persists between preloader → start screen.
+   Like hero-67, uses CSS transitions to move.
+   ============================================ */
 
-.preloader__ring-wrap {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  animation: ringEntry 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.4s both;
-}
-
-@keyframes ringEntry {
-  0% {
-    transform: scale(0) rotate(-90deg);
-    opacity: 0;
-  }
-
-  100% {
-    transform: scale(1) rotate(0deg);
-    opacity: 1;
-  }
-}
-
-.preloader__ring-svg {
+.odometer-global {
   position: absolute;
   top: 0;
   left: 0;
-  filter: drop-shadow(3px 3px 0px var(--neo-black));
+  width: 100%;
+  height: 100%;
+  z-index: 100001;
+  pointer-events: none;
 }
 
-.preloader__ring-progress {
-  transition: stroke-dashoffset 0.3s ease;
+/* Slot base — ALWAYS absolute, transition handles movement */
+.odometer-global .odometer__slot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: transform 0.9s cubic-bezier(0.75, 0, 0.25, 1),
+              width 0.9s cubic-bezier(0.75, 0, 0.25, 1),
+              height 0.9s cubic-bezier(0.75, 0, 0.25, 1),
+              border-radius 0.9s cubic-bezier(0.75, 0, 0.25, 1),
+              background 0.3s ease,
+              box-shadow 0.3s ease;
+  will-change: transform;
 }
 
-.preloader__ring-percent {
-  font-family: var(--font-mono);
-  font-size: clamp(0.8rem, 1.5vw, 1.8rem);
-  font-weight: 900;
-  color: var(--neo-black);
-  z-index: 1;
-  line-height: 1;
+/* === PRELOADING STATE: slots centered below hero, side by side === */
+.odometer-global--preloading .odometer__slot--left {
+  transform: translate(calc(50vw - clamp(4rem, 9vw, 7rem) - 50%), calc(min(18vh, 150px) + 38vh - 50%));
 }
 
-/* ============================
-   STATUS TEXT
-   ============================ */
+.odometer-global--preloading .odometer__slot--center {
+  transform: translate(calc(50vw - 50%), calc(min(18vh, 150px) + 38vh - 50%));
+}
 
-.preloader__status-wrap {
-  text-align: center;
-  min-height: 2.5rem;
+.odometer-global--preloading .odometer__slot--right {
+  transform: translate(calc(50vw + clamp(4rem, 9vw, 7rem) - 50%), calc(min(18vh, 150px) + 38vh - 50%));
+}
+
+/* === START STATE: each slot flies to its card position === */
+
+/* Left slot → start-card position (left side) */
+.odometer-global--transitioning .odometer__slot--left,
+.odometer-global--start .odometer__slot--left {
+  transform: translate(calc(var(--target-x, 25vw) - 50%), calc(var(--target-y, 50vh) - 50%));
+  background: var(--neo-pink);
+}
+
+/* Center slot → hero-game-label position (under header) */
+.odometer-global--transitioning .odometer__slot--center,
+.odometer-global--start .odometer__slot--center {
+  transform: translate(calc(var(--target-x, 50vw) - 50%), calc(var(--target-y, 110px) - 50%)) rotate(-3deg);
+  background: var(--neo-white);
+}
+
+/* Right slot → leaderboard position (right side) */
+.odometer-global--transitioning .odometer__slot--right,
+.odometer-global--start .odometer__slot--right {
+  transform: translate(calc(var(--target-x, 75vw) - 50%), calc(var(--target-y, 50vh) - 50%));
+  background: var(--neo-white);
+}
+
+/* Ukrycie cyfr na ekranie głównym - kwadraciki stają się puste */
+.odometer-global--transitioning .odometer__digit-track,
+.odometer-global--start .odometer__digit-track {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Phase 3: Green curtain overlay on slots */
+.odometer-global .odometer__slot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--neo-yellow);
+  z-index: 10;
+  opacity: 0;
+  transition: transform 0.6s cubic-bezier(0.75, 0, 0.25, 1),
+              opacity 0.4s ease;
+}
+
+/* Curtain becomes visible during transition and START state */
+.odometer-global--transitioning .odometer__slot::after,
+.odometer-global--start .odometer__slot::after {
+  opacity: 1;
+}
+
+/* Curtain slides up when revealed */
+.odometer-global--revealed .odometer__slot::after {
+  transform: translateY(-100%);
+}
+
+/* Content layer inside slots — hidden behind curtain */
+.odometer__content {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  padding: 2rem 1.5rem;
+  opacity: 0;
+  pointer-events: none;
+  overflow-y: auto;
+}
+
+.odometer-global--revealed .odometer__content {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.3s ease-out 0.3s;
+}
+
+/* Center slot label content */
+.odometer__content--label {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.preloader__status {
+  padding: 0.4rem 1.5rem;
   font-family: var(--font-mono);
-  font-size: clamp(0.9rem, 2vw, 1.3rem);
+  font-size: clamp(1rem, 2vw, 1.4rem);
   font-weight: 800;
+  letter-spacing: 0.2em;
   color: var(--neo-black);
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  display: inline-block;
-  animation: statusFlicker 0.4s ease both;
-  position: relative;
+  white-space: nowrap;
 }
 
-.preloader__status::after {
-  content: '▌';
-  animation: cursorBlink 0.8s step-end infinite;
-  margin-left: 4px;
-  color: var(--neo-pink);
+
+
+/* Enable pointer-events on slots after reveal */
+.odometer-global--revealed {
+  pointer-events: auto;
 }
 
-@keyframes statusFlicker {
-  0% {
-    opacity: 0;
-    transform: translateY(8px);
-    filter: blur(4px);
-  }
-
-  50% {
-    opacity: 0.7;
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
-  }
-}
-
-@keyframes cursorBlink {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0;
-  }
-}
-
-/* ============================
-   LINEAR PROGRESS BAR
-   ============================ */
-
-.preloader__bar-track {
-  width: 100%;
-  max-width: 400px;
-  height: 18px;
-  background: var(--neo-white);
-  border: 3px solid var(--neo-black);
-  border-radius: 99px;
+.odometer__slot {
+  width: clamp(3rem, 7vw, 5.5rem);
+  height: clamp(3.8rem, 9vw, 7rem);
   overflow: hidden;
-  box-shadow: 4px 4px 0px var(--neo-black);
-  animation: barEntry 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.6s both;
+  background: var(--neo-white);
+  border: var(--border-width) solid var(--neo-black);
+  border-radius: 10px;
+  box-shadow: 6px 6px 0px var(--neo-black);
+  position: relative;
+  contain: layout paint style;
+  will-change: transform, width, height, border-radius;
 }
 
-@keyframes barEntry {
-  0% {
-    transform: scaleX(0.3) rotate(-2deg);
-    opacity: 0;
-  }
+.odometer__digit-track {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: transform;
+}
 
+.odometer__digit {
+  width: 100%;
+  height: clamp(3.8rem, 9vw, 7rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: clamp(2.2rem, 6vw, 4.5rem);
+  font-weight: 900;
+  color: var(--neo-black);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Done state — yellow glow (only in preloader, before screen changes to START or transitioning starts) */
+.odometer-global:not(.odometer-global--start):not(.odometer-global--transitioning).odometer--done .odometer__slot {
+  background: var(--neo-yellow);
+  box-shadow: 5px 5px 0px var(--neo-black), 0 0 20px rgba(212, 255, 0, 0.4);
+}
+
+@keyframes odometerEntry {
+  0% {
+    opacity: 0;
+    margin-top: 30px;
+    scale: 0.7;
+  }
+  60% {
+    opacity: 1;
+    margin-top: -5px;
+    scale: 1.03;
+  }
   100% {
-    transform: scaleX(1) rotate(0deg);
+    opacity: 1;
+    margin-top: 0;
+    scale: 1;
+  }
+}
+
+/* Hero spacer — removed, now handled by padding-top on .preloader__content */
+.preloader__hero-spacer {
+  display: none;
+}
+
+/* ============================================
+   HORIZON LINES — Expanding Reveal
+   ============================================ */
+
+.horizon-lines {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  gap: 0;
+  height: 6px;
+  position: relative;
+}
+
+.horizon-line {
+  height: 3px;
+  transition: width 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: width;
+  border-radius: 2px;
+}
+
+.horizon-line--left {
+  background: var(--neo-yellow);
+  box-shadow: 0 0 8px rgba(212, 255, 0, 0.4);
+}
+
+.horizon-line--right {
+  background: var(--neo-pink);
+  box-shadow: 0 0 8px rgba(255, 0, 160, 0.3);
+}
+
+/* ============================================
+   EXIT ANIMATION — Curtain Close
+   ============================================ */
+
+.preloader--exiting {
+  animation: preloaderCurtainClose 0.9s cubic-bezier(0.75, 0, 0.25, 1) forwards;
+}
+
+.preloader--exiting .horizon-lines {
+  animation: horizonExit 0.4s ease forwards;
+}
+
+@keyframes preloaderCurtainClose {
+  0% {
+    clip-path: inset(0 0 0 0);
     opacity: 1;
   }
-}
-
-.preloader__bar-fill {
-  height: 100%;
-  border-radius: 99px;
-  background: var(--neo-yellow);
-  transition: width 0.3s ease;
-  position: relative;
-  /* Animated candy stripes */
-  background-image: repeating-linear-gradient(-45deg,
-      transparent,
-      transparent 5px,
-      rgba(255, 255, 255, 0.3) 5px,
-      rgba(255, 255, 255, 0.3) 10px);
-  background-size: 200% 100%;
-  animation: preloaderStripe 1s linear infinite;
-}
-
-.preloader__bar-fill::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 3px;
-  right: 3px;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.45);
-  border-radius: 99px;
-}
-
-@keyframes preloaderStripe {
-  0% {
-    background-position: 0 0;
-  }
-
   100% {
-    background-position: 28px 0;
+    clip-path: inset(50% 0 50% 0);
+    opacity: 0;
+    pointer-events: none;
   }
 }
 
-/* ============================
-   CAMERA PERMISSION CARD
-   ============================ */
+@keyframes horizonExit {
+  0% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(5); }
+}
 
 .camera-modal-overlay {
   position: fixed;
@@ -3034,181 +3143,25 @@ p {
 }
 
 /* ============================
-   EXIT ANIMATION — REVEAL
-   ============================ */
-
-.preloader--exiting {
-  animation: preloaderExit 0.9s cubic-bezier(0.75, 0, 0.25, 1) forwards;
-}
-
-.preloader--exiting .preloader__six {
-  animation: preloaderDigitExitLeft 0.6s cubic-bezier(0.75, 0, 0.25, 1) forwards !important;
-}
-
-.preloader--exiting .preloader__seven {
-  animation: preloaderDigitExitRight 0.6s cubic-bezier(0.75, 0, 0.25, 1) 0.05s forwards !important;
-}
-
-.preloader--exiting .preloader__ring-wrap {
-  animation: preloaderRingExit 0.5s cubic-bezier(0.75, 0, 0.25, 1) forwards !important;
-}
-
-.preloader--exiting .preloader__status-wrap {
-  animation: preloaderStatusExit 0.4s cubic-bezier(0.75, 0, 0.25, 1) forwards;
-}
-
-.preloader--exiting .preloader__bar-track {
-  animation: preloaderBarExit 0.4s cubic-bezier(0.75, 0, 0.25, 1) forwards !important;
-}
-
-.preloader--exiting .preloader__footer-label {
-  animation: preloaderStatusExit 0.3s ease forwards;
-}
-
-@keyframes preloaderExit {
-  0% {
-    opacity: 1;
-  }
-
-  70% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0;
-    pointer-events: none;
-  }
-}
-
-@keyframes preloaderDigitExitLeft {
-  0% {
-    transform: rotate(-6deg) translateY(0) scale(1);
-    opacity: 1;
-  }
-
-  100% {
-    transform: rotate(-20deg) translateY(-80px) translateX(-60px) scale(0.5);
-    opacity: 0;
-    filter: blur(8px);
-  }
-}
-
-@keyframes preloaderDigitExitRight {
-  0% {
-    transform: rotate(5deg) translateY(-8px) scale(1);
-    opacity: 1;
-  }
-
-  100% {
-    transform: rotate(20deg) translateY(-80px) translateX(60px) scale(0.5);
-    opacity: 0;
-    filter: blur(8px);
-  }
-}
-
-@keyframes preloaderRingExit {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-
-  100% {
-    transform: scale(2.5);
-    opacity: 0;
-    filter: blur(10px);
-  }
-}
-
-@keyframes preloaderStatusExit {
-  0% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateY(20px);
-    opacity: 0;
-    filter: blur(4px);
-  }
-}
-
-@keyframes preloaderBarExit {
-  0% {
-    transform: scaleX(1);
-    opacity: 1;
-  }
-
-  100% {
-    transform: scaleX(0.5);
-    opacity: 0;
-    filter: blur(4px);
-  }
-}
-
-/* ============================
    PRELOADER RESPONSIVE
    ============================ */
 
 @media (max-width: 768px) {
-
-  .preloader__six,
-  .preloader__seven {
-    font-size: clamp(5rem, 22vw, 10rem);
-  }
-
-  .preloader__ring-wrap {
-    width: 80px;
-    height: 80px;
-  }
-
-  .preloader__ring-svg {
-    width: 80px;
-    height: 80px;
-  }
-
-  .preloader__ring-percent {
-    font-size: 1.3rem;
-  }
-
   .preloader__camera-card {
     padding: 1.5rem;
   }
 
-  .preloader__marquee {
-    font-size: 1rem;
+  .phase-tags {
+    max-width: 90vw;
   }
 
-  .preloader__bar-track {
-    max-width: 280px;
+  .phase-tag {
+    padding: 0.4rem 1rem;
+    font-size: 0.7rem;
   }
 }
 
 @media (max-width: 480px) {
-
-  .preloader__six,
-  .preloader__seven {
-    font-size: clamp(4rem, 25vw, 7rem);
-    -webkit-text-stroke: 2px var(--neo-black);
-  }
-
-  .preloader__hero {
-    gap: 0.2rem;
-  }
-
-  .preloader__ring-wrap {
-    width: 60px;
-    height: 60px;
-  }
-
-  .preloader__ring-svg {
-    width: 60px;
-    height: 60px;
-  }
-
-  .preloader__ring-percent {
-    font-size: 1rem;
-  }
-
   .preloader__camera-card {
     padding: 1rem;
   }
@@ -3225,5 +3178,541 @@ p {
   .preloader__step {
     font-size: 0.85rem;
     padding: 0.5rem 0.8rem;
+  }
+}
+
+/* ============================================
+   MOBILE RESPONSIVENESS — COMPREHENSIVE FIX
+   ============================================ */
+
+/* --- GAMEPLAY AREA: Tablet --- */
+@media (max-width: 768px) {
+  .is-gameplay .main-content {
+    padding: 0.25rem 0.5rem 0.5rem 0.5rem;
+  }
+
+  .is-gameplay .game-area {
+    max-width: 100%;
+  }
+
+  .progress-wrapper {
+    max-width: 100%;
+    min-height: 44px;
+    margin-bottom: 0.25rem;
+  }
+
+  .camera-wrapper {
+    max-width: 100%;
+  }
+
+  .stats-bar {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    box-shadow: 4px 4px 0px var(--neo-black);
+  }
+
+  .stats-bar--playing {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .countdown-overlay {
+    font-size: 8rem;
+    -webkit-text-stroke: 3px var(--neo-black);
+    text-shadow: 5px 5px 0px var(--neo-black);
+    border-radius: 12px;
+  }
+
+  .camera-container {
+    border-radius: 12px;
+    box-shadow: 6px 6px 0px var(--neo-black);
+  }
+
+  .camera-inner {
+    border-radius: 12px;
+  }
+
+  /* Result screen */
+  .final-result-card {
+    padding: 1.5rem;
+  }
+
+  .final-score {
+    font-size: 1.5rem;
+    margin: 1rem 0;
+  }
+
+  .huge-number {
+    font-size: 5rem;
+    -webkit-text-stroke: 3px var(--neo-black);
+    text-shadow: 5px 5px 0px var(--neo-black);
+  }
+
+  .rank-display {
+    font-size: 1.2rem !important;
+  }
+
+  .result-actions {
+    gap: 0.8rem;
+    margin-top: 1rem;
+  }
+
+  /* Certificate */
+  .certificate-modal {
+    padding: 1rem;
+    box-shadow: 6px 6px 0px var(--neo-black);
+    max-height: 90vh;
+  }
+
+  .certificate-modal .glow-text {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .cert-actions {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .cert-buttons {
+    flex-direction: row;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  .cert-buttons .btn-primary,
+  .cert-buttons .btn-secondary {
+    font-size: 0.9rem !important;
+    padding: 0.6rem 1rem !important;
+    width: auto !important;
+  }
+
+  .cert-qr p {
+    font-size: 0.85rem !important;
+  }
+
+  .qr-box {
+    padding: 8px;
+  }
+
+  /* Name input */
+  .name-input-container .glow-text {
+    font-size: 1.5rem;
+  }
+
+  .name-input-container .subtitle {
+    font-size: 1.5rem !important;
+  }
+
+  .arcade-input {
+    gap: 0.5rem;
+    margin: 1rem 0;
+  }
+
+  .consent-box {
+    padding: 0.75rem;
+    max-width: 100%;
+  }
+
+  .consent-label {
+    font-size: 0.75rem;
+  }
+
+  /* Floating scores — smaller on mobile */
+  .floating-score {
+    font-size: 2rem;
+  }
+
+  /* Combo counter — scale down */
+  .combo-counter {
+    padding: 0.3rem 0.8rem;
+  }
+
+  .combo-value {
+    font-size: 1.4rem;
+  }
+
+  .combo-label {
+    font-size: 0.55rem;
+  }
+}
+
+/* --- GAMEPLAY AREA: Phone --- */
+@media (max-width: 480px) {
+  .is-gameplay .main-content {
+    padding: 0.15rem 0.25rem 0.25rem 0.25rem;
+  }
+
+  .stats-bar {
+    padding: 0.4rem 0.5rem;
+    border-radius: 8px;
+    margin-bottom: 0.25rem;
+    box-shadow: 3px 3px 0px var(--neo-black);
+  }
+
+  .stats-bar--playing {
+    gap: 0.25rem;
+  }
+
+  .stat {
+    font-size: 1rem;
+    gap: 0.25rem;
+  }
+
+  .stat span {
+    font-size: 1.5rem;
+    padding: 0 0.4rem;
+  }
+
+  .live-dot {
+    font-size: 0.55rem;
+  }
+
+  .instruction-box {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+    box-shadow: 3px 3px 0px var(--neo-black);
+  }
+
+  .circular-timer {
+    width: 55px;
+    height: 55px;
+  }
+
+  .circular-timer__svg {
+    width: 55px;
+    height: 55px;
+  }
+
+  .circular-timer__value {
+    font-size: 1.2rem;
+  }
+
+  .progress-wrapper {
+    min-height: 38px;
+    margin-bottom: 0.15rem;
+  }
+
+  .progress-rank-labels {
+    font-size: 0.7rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .progress-next {
+    font-size: 0.6rem;
+  }
+
+  .progress-track {
+    height: 16px;
+  }
+
+  .countdown-overlay {
+    font-size: 5rem;
+    -webkit-text-stroke: 2px var(--neo-black);
+    text-shadow: 3px 3px 0px var(--neo-black);
+    border-radius: 8px;
+  }
+
+  .camera-container {
+    border-radius: 8px;
+    box-shadow: 4px 4px 0px var(--neo-black);
+    border-width: 3px;
+  }
+
+  .camera-inner {
+    border-radius: 8px;
+  }
+
+  /* Result screen */
+  .final-result-card {
+    padding: 1rem 0.75rem;
+    border-radius: 10px;
+    box-shadow: 5px 5px 0px var(--neo-black);
+  }
+
+  .final-score {
+    font-size: 1.2rem;
+    margin: 0.5rem 0;
+  }
+
+  .huge-number {
+    font-size: 3.5rem;
+    -webkit-text-stroke: 2px var(--neo-black);
+    text-shadow: 4px 4px 0px var(--neo-black);
+    margin: 0.5rem 0;
+  }
+
+  .rank-display {
+    font-size: 1rem !important;
+    margin: 0.5rem 0 !important;
+  }
+
+  .result-actions {
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+  }
+
+  .result-actions .btn-primary,
+  .result-actions .btn-secondary {
+    padding: 0.7rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .glow-text {
+    font-size: 1.4rem;
+  }
+
+  /* Certificate */
+  .certificate-overlay {
+    padding: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .certificate-modal {
+    padding: 0.75rem;
+    box-shadow: 4px 4px 0px var(--neo-black);
+    border-radius: 10px;
+    max-height: 95vh;
+  }
+
+  .certificate-modal .glow-text {
+    font-size: 1.2rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .cert-preview-wrapper {
+    margin-bottom: 0.75rem;
+    box-shadow: 3px 3px 0px var(--neo-black);
+  }
+
+  .cert-actions {
+    gap: 0.75rem;
+  }
+
+  .cert-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .cert-buttons .btn-primary,
+  .cert-buttons .btn-secondary {
+    font-size: 0.85rem !important;
+    padding: 0.5rem 0.8rem !important;
+    width: 100% !important;
+  }
+
+  .cert-qr p {
+    font-size: 0.75rem !important;
+    margin: 0.25rem 0 !important;
+  }
+
+  .qr-box {
+    padding: 6px;
+  }
+
+  .certificate-modal .btn-secondary {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+  }
+
+  /* Name input */
+  .name-input-container .glow-text {
+    font-size: 1.3rem;
+  }
+
+  .name-input-container .subtitle {
+    font-size: 1.3rem !important;
+  }
+
+  .name-input-container .instruction {
+    font-size: 0.9rem;
+  }
+
+  .char-slot {
+    width: 32px;
+    height: 45px;
+    font-size: 1.8rem;
+    border-radius: 8px;
+    box-shadow: 3px 3px 0px var(--neo-black);
+    border-width: 3px;
+  }
+
+  .arcade-input {
+    gap: 0.35rem;
+    margin: 0.75rem 0;
+  }
+
+  .consent-box {
+    padding: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .consent-label {
+    font-size: 0.7rem;
+    gap: 6px;
+  }
+
+  .consent-checkbox {
+    transform: scale(1);
+  }
+
+  .arcade-btn {
+    font-size: 1rem !important;
+    padding: 0.7rem 1.5rem !important;
+  }
+
+  /* Floating scores */
+  .floating-score {
+    font-size: 1.5rem;
+    -webkit-text-stroke: 1px var(--neo-black);
+  }
+
+  /* Combo */
+  .combo-counter {
+    padding: 0.2rem 0.6rem;
+    border-radius: 8px;
+    top: 5px;
+    right: 5px;
+  }
+
+  .combo-value {
+    font-size: 1.1rem;
+  }
+
+  .combo-label {
+    font-size: 0.5rem;
+    letter-spacing: 2px;
+  }
+
+  /* Marquee */
+  .marquee-3d-container {
+    height: 40px;
+  }
+
+  .marquee-3d-drum {
+    transform: translateZ(-20px) rotateX(0deg);
+  }
+
+  .marquee-3d-drum.is-flipped {
+    transform: translateZ(-20px) rotateX(90deg);
+  }
+
+  .marquee-face--front {
+    transform: rotateX(0deg) translateZ(20px);
+  }
+
+  .marquee-face--bottom {
+    transform: rotateX(-90deg) translateZ(20px);
+  }
+
+  .marquee-track span {
+    padding: 0 1rem;
+    font-size: 0.9rem;
+  }
+
+  /* Header */
+  .header {
+    padding: 0.5rem 1rem 0.75rem 1rem;
+  }
+
+  .hero-game-label {
+    padding: 0.3rem 1rem;
+    box-shadow: 3px 3px 0px var(--neo-black);
+  }
+
+  .hero-game-label-wrapper {
+    margin-top: -1rem;
+  }
+}
+
+/* --- Ultra small screens (iPhone SE, Galaxy Fold) --- */
+@media (max-width: 375px) {
+  .huge-number {
+    font-size: 3rem;
+  }
+
+  .char-slot {
+    width: 28px;
+    height: 40px;
+    font-size: 1.5rem;
+  }
+
+  .countdown-overlay {
+    font-size: 4rem;
+  }
+
+  .stats-bar {
+    padding: 0.3rem 0.4rem;
+  }
+
+  .stat {
+    font-size: 0.85rem;
+  }
+
+  .stat span {
+    font-size: 1.2rem;
+  }
+
+  .circular-timer {
+    width: 45px;
+    height: 45px;
+  }
+
+  .circular-timer__svg {
+    width: 45px;
+    height: 45px;
+  }
+
+  .circular-timer__value {
+    font-size: 1rem;
+  }
+
+  .certificate-modal {
+    padding: 0.5rem;
+  }
+}
+
+/* --- Landscape phones (game area needs to fit in short viewport) --- */
+@media (max-height: 600px) and (orientation: landscape) {
+  .is-gameplay .main-content {
+    padding: 0.15rem 0.5rem;
+  }
+
+  .stats-bar {
+    padding: 0.3rem 0.5rem;
+    margin-bottom: 0.15rem;
+    border-radius: 8px;
+  }
+
+  .progress-wrapper {
+    min-height: 30px;
+    margin-bottom: 0.1rem;
+  }
+
+  .progress-track {
+    height: 14px;
+  }
+
+  .progress-rank-labels {
+    font-size: 0.6rem;
+    margin-bottom: 0.1rem;
+  }
+
+  .countdown-overlay {
+    font-size: 4rem;
+  }
+
+  .marquee-3d-container {
+    height: 32px;
+  }
+
+  .marquee-track span {
+    font-size: 0.8rem;
+    padding: 0 0.8rem;
   }
 }

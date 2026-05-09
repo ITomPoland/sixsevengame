@@ -23,6 +23,15 @@ function App() {
   const [screen, setScreen] = useState('PRELOADING');
   const [preloaderProgress, setPreloaderProgress] = useState(0);
   const [isPreloaderExiting, setIsPreloaderExiting] = useState(false);
+  
+  // Odometer FLIP-lite refs & state
+  const startCardRef = useRef(null);
+  const leaderboardRef = useRef(null);
+  const speedGameRef = useRef(null);
+  const [targetCoords, setTargetCoords] = useState({ left: {}, center: {}, right: {} });
+  const [slotsLanded, setSlotsLanded] = useState(false);
+  const [slotsRevealed, setSlotsRevealed] = useState(false);
+
   const preloadedStreamRef = useRef(null);
   const preloadedLandmarkerRef = useRef(null);
   const [score, setScore] = useState(0);
@@ -130,6 +139,50 @@ function App() {
   useEffect(() => {
     screenRef.current = screen;
   }, [screen]);
+
+  // Measure Odometer targets whenever we start transitioning or enter START
+  useLayoutEffect(() => {
+    if (screen === 'START' || isPreloaderExiting) {
+      const measureAnchors = () => {
+        const getCenter = (ref) => {
+          if (!ref.current) return {};
+          const rect = ref.current.getBoundingClientRect();
+          const computedStyle = window.getComputedStyle(ref.current);
+          return { 
+            x: rect.left + window.scrollX + rect.width / 2, 
+            y: rect.top + window.scrollY + rect.height / 2,
+            w: rect.width,
+            h: rect.height,
+            br: computedStyle.borderRadius
+          };
+        };
+
+        setTargetCoords({
+          left: getCenter(startCardRef),
+          right: getCenter(leaderboardRef),
+          center: getCenter(speedGameRef)
+        });
+      };
+
+      // Measure immediately and on resize
+      measureAnchors();
+      // Use requestAnimationFrame to ensure layout is fully settled after rendering
+      requestAnimationFrame(measureAnchors);
+      
+      window.addEventListener('resize', measureAnchors);
+      return () => window.removeEventListener('resize', measureAnchors);
+    }
+  }, [screen, isPreloaderExiting]);
+
+  // Phase 2: Start curtain reveal 800ms after flight starts (100ms before landing)
+  useEffect(() => {
+    if (isPreloaderExiting) {
+      const timer = setTimeout(() => setSlotsRevealed(true), 800);
+      return () => clearTimeout(timer);
+    } else if (screen !== 'START') {
+      setSlotsRevealed(false);
+    }
+  }, [isPreloaderExiting, screen]);
 
   useEffect(() => {
     scoreRef.current = score;
@@ -243,8 +296,8 @@ function App() {
       setCombo(0);
     }, 1500);
 
-    // Throttle visual bursts: max every 300ms (~3/sec)
-    if (now - lastEffectTimeRef.current < 300) return;
+    // Throttle visual bursts: max every 400ms (~2.5/sec) — reduced for mobile perf
+    if (now - lastEffectTimeRef.current < 400) return;
     lastEffectTimeRef.current = now;
     
     const pending = pendingScoreRef.current;
@@ -254,7 +307,7 @@ function App() {
     if (particleRef.current) {
       const cx = 0.3 + Math.random() * 0.4; // 30-70% horizontal
       const cy = 0.3 + Math.random() * 0.4; // 30-70% vertical
-      const count = Math.min(pending * 6, 25); // Cap particles
+      const count = Math.min(pending * 4, 15); // Reduced cap for performance
       particleRef.current.emit(cx, cy, count);
     }
 
@@ -263,13 +316,13 @@ function App() {
       floatingScoresRef.current.add(pending);
     }
 
-    // 3. Shockwave ring every 5 points
-    if (newScore % 5 === 0 && shockwaveRef.current) {
+    // 3. Shockwave ring every 7 points (was 5 — less frequent = less GPU load)
+    if (newScore % 7 === 0 && shockwaveRef.current) {
       shockwaveRef.current.trigger();
     }
 
-    // 4. Camera bump every 5 points
-    if (newScore % 5 === 0 && cameraWrapperRef.current) {
+    // 4. Camera bump every 7 points
+    if (newScore % 7 === 0 && cameraWrapperRef.current) {
       cameraWrapperRef.current.classList.remove('camera-bump');
       void cameraWrapperRef.current.offsetWidth;
       cameraWrapperRef.current.classList.add('camera-bump');
@@ -534,54 +587,117 @@ function App() {
         <header className={`header ${isExitingStart ? 'is-exiting' : ''} ${isPreloading ? 'header--preloading' : ''} ${isPreloaderExiting ? 'header--preloader-exiting' : ''} ${isReturningToMenu ? 'header--returning' : ''}`}>
           <div className={`hero-67 ${screen === 'START' ? 'is-floating' : ''}`}>
             <span className="hero-six">6</span>
-            
-            {/* Progress ring ONLY when preloading or exiting */}
-            {isPreloading && (
-              <div className={`preloader-ring-inline ${isPreloaderExiting ? 'is-exiting' : ''}`}>
-                <svg className="preloader__ring-svg" viewBox="0 0 120 120" width="100%" height="100%">
-                  <circle cx="60" cy="60" r="52" fill="none" stroke="var(--neo-black)" strokeWidth="4" opacity="0.15" />
-                  <circle
-                    cx="60" cy="60" r="52" fill="none" stroke="var(--neo-yellow)" strokeWidth="6"
-                    strokeLinecap="round" strokeDasharray="326.72"
-                    strokeDashoffset={326.72 - (preloaderProgress / 100) * 326.72}
-                    transform="rotate(-90 60 60)" className="preloader__ring-progress"
-                  />
-                </svg>
-                <span className="preloader__ring-percent">{Math.round(preloaderProgress)}</span>
-              </div>
-            )}
-
             <span className="hero-seven">7</span>
           </div>
           
-          {/* Label only visible on START */}
-          {!isPreloading && (
+          {/* Label only visible on START (or during transition for accurate measurement) */}
+          {(!isPreloading || isPreloaderExiting) && (
             <div className="hero-game-label-wrapper">
-              <span className="hero-game-label">✦ SPEED GAME ✦</span>
+              <span className="hero-game-label" ref={speedGameRef}>✦ SPEED GAME ✦</span>
             </div>
           )}
         </header>
       )}
 
-      <main className="main-content">
-        {screen === 'START' && (
-          <div className={`start-layout ${isExitingStart ? 'is-exiting' : ''}`} key="start">
-            <div className="card start-card">
-              <span className="sticker-accent sticker-accent--time">15 SEC</span>
-              <span className="sticker-accent sticker-accent--hand">🖐️</span>
-              <div className="card-header-editorial">
-                <span className="card-overline">Festiwal Nauki UO</span>
-                <h2 className="card-title">WYZWANIE "67"</h2>
+      {/* Shared ODOMETER — persists between PRELOADER and START (like hero 67) */}
+      {(isPreloading || screen === 'START') && (() => {
+        const getDigits = (n) => {
+          const s = String(Math.min(Math.round(n), 100)).padStart(3, '0');
+          return [s[0], s[1], s[2]];
+        };
+        const digits = getDigits(preloaderProgress);
+        const isDone = preloaderProgress >= 100;
+        return (
+          <div className={`odometer-global ${isPreloading ? 'odometer-global--preloading' : ''} ${screen === 'START' ? 'odometer-global--start' : ''} ${isPreloaderExiting ? 'odometer-global--transitioning' : ''} ${isDone ? 'odometer--done' : ''} ${slotsRevealed ? 'odometer-global--revealed' : ''}`}>
+            <div 
+              className="odometer__slot odometer__slot--left"
+              style={{
+                '--target-x': (screen === 'START' || isPreloaderExiting) && targetCoords.left.x ? `${targetCoords.left.x}px` : undefined,
+                '--target-y': (screen === 'START' || isPreloaderExiting) && targetCoords.left.x ? `${targetCoords.left.y}px` : undefined,
+                ...((screen === 'START' || isPreloaderExiting) && targetCoords.left.w ? {
+                  width: `${targetCoords.left.w}px`,
+                  height: `${targetCoords.left.h}px`,
+                  borderRadius: targetCoords.left.br
+                } : {})
+              }}
+            >
+              <div className="odometer__digit-track" style={{ transform: `translateY(-${parseInt(digits[0]) * 10}%)` }}>
+                {[0,1,2,3,4,5,6,7,8,9].map(d => <span className="odometer__digit" key={d}>{d}</span>)}
               </div>
-              <p>Sprawdź swoją szybkość! Masz 15 sekund, by wykonać jak najwięcej naprzemiennych wymachów rąk (lewa góra, prawa dół i na odwrót).</p>
-              <div className="instruction-box" style={{marginBottom: '1.5rem'}}>
-                <span className="icon">⚠️</span> Odsun się odrobinę, by kamera widziała Twoje ramiona!
+              {/* Card content — revealed by curtain */}
+              <div className="odometer__content">
+                <div className="card-header-editorial">
+                  <span className="card-overline">Festiwal Nauki UO</span>
+                  <h2 className="card-title">WYZWANIE "67"</h2>
+                </div>
+                <p>Sprawdź swoją szybkość! Masz 15 sekund, by wykonać jak najwięcej naprzemiennych wymachów rąk (lewa góra, prawa dół i na odwrót).</p>
+                <div className="instruction-box" style={{marginBottom: '1.5rem'}}>
+                  <span className="icon">⚠️</span> Odsun się odrobinę, by kamera widziała Twoje ramiona!
+                </div>
+                <button className="btn-primary" onClick={handleStartGame}>
+                  ROZPOCZNIJ GRĘ
+                </button>
               </div>
-              <button className="btn-primary" onClick={handleStartGame}>
-                ROZPOCZNIJ GRĘ
-              </button>
             </div>
-            <Leaderboard leaderboard={leaderboard} />
+            <div 
+              className="odometer__slot odometer__slot--center"
+              style={{
+                '--target-x': (screen === 'START' || isPreloaderExiting) && targetCoords.center.x ? `${targetCoords.center.x}px` : undefined,
+                '--target-y': (screen === 'START' || isPreloaderExiting) && targetCoords.center.x ? `${targetCoords.center.y}px` : undefined,
+                ...((screen === 'START' || isPreloaderExiting) && targetCoords.center.w ? {
+                  width: `${targetCoords.center.w}px`,
+                  height: `${targetCoords.center.h}px`,
+                  borderRadius: targetCoords.center.br
+                } : {})
+              }}
+            >
+              <div className="odometer__digit-track" style={{ transform: `translateY(-${parseInt(digits[1]) * 10}%)` }}>
+                {[0,1,2,3,4,5,6,7,8,9].map(d => <span className="odometer__digit" key={d}>{d}</span>)}
+              </div>
+              {/* Speed game label — revealed by curtain */}
+              <div className="odometer__content odometer__content--label">
+                <span>✦ SPEED GAME ✦</span>
+              </div>
+            </div>
+            <div 
+              className="odometer__slot odometer__slot--right"
+              style={{
+                '--target-x': (screen === 'START' || isPreloaderExiting) && targetCoords.right.x ? `${targetCoords.right.x}px` : undefined,
+                '--target-y': (screen === 'START' || isPreloaderExiting) && targetCoords.right.x ? `${targetCoords.right.y}px` : undefined,
+                ...((screen === 'START' || isPreloaderExiting) && targetCoords.right.w ? {
+                  width: `${targetCoords.right.w}px`,
+                  height: `${targetCoords.right.h}px`,
+                  borderRadius: targetCoords.right.br
+                } : {})
+              }}
+            >
+              <div className="odometer__digit-track" style={{ transform: `translateY(-${parseInt(digits[2]) * 10}%)` }}>
+                {[0,1,2,3,4,5,6,7,8,9].map(d => <span className="odometer__digit" key={d}>{d}</span>)}
+              </div>
+              {/* Leaderboard content — revealed by curtain */}
+              <div className="odometer__content">
+                <h3 className="glow-text-small">🏆 TOP 5 DZISIAJ</h3>
+                <ul className="leaderboard-list">
+                  {[...(leaderboard || []), ...Array(5)].slice(0, 5).map((entry, index) => (
+                    <li key={index} className={`leaderboard-item ${!entry ? 'empty-slot' : ''}`}>
+                      <span className="rank">#{index + 1}</span>
+                      <span className="name">{entry ? entry.name : '---'}</span>
+                      <span className="score">{entry ? entry.score : '-'}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      <main className="main-content">
+        {(screen === 'START' || isPreloaderExiting) && (
+          <div className={`start-layout ${isExitingStart ? 'is-exiting' : ''}`} key="start">
+            {/* Ghost divs — invisible, only for position measurement */}
+            <div className="card start-card" ref={startCardRef} />
+            <Leaderboard ref={leaderboardRef} leaderboard={leaderboard} />
           </div>
         )}
 
@@ -625,7 +741,7 @@ function App() {
             </div>
             
             {/* Progress bar — always visible during gameplay to prevent layout shift */}
-            <div className="progress-wrapper" style={{ width: '100%', maxWidth: '640px', marginBottom: '0.5rem', minHeight: '52px' }}>
+            <div className="progress-wrapper">
               {screen === 'PLAYING' ? (
                 <ProgressBar score={score} leaderboard={leaderboard} />
               ) : (
@@ -638,7 +754,6 @@ function App() {
             <div 
               ref={cameraWrapperRef}
               className="camera-wrapper"
-              style={{ position: 'relative', width: '100%', maxWidth: '640px', overflow: 'visible' }}
             >
               
               <div className="camera-inner">

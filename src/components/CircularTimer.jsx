@@ -18,8 +18,8 @@ const CircularTimer = ({ timeLeft }) => {
   return (
     <div className={`circular-timer ${isUrgent ? 'circular-timer--urgent' : ''}`}>
       <svg
-        width="90"
-        height="90"
+        width="100%"
+        height="100%"
         viewBox="0 0 90 90"
         className="circular-timer__svg"
       >

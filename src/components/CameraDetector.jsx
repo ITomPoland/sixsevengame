@@ -15,6 +15,19 @@ export default function CameraDetector({ onPoseUpdate, preloadedStream, preloade
   useEffect(() => {
     let active = true;
 
+    // Sync canvas to video dimensions ONCE when video loads (fixes mobile dot offset)
+    const syncCanvasOnce = () => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!video || !canvas) return;
+      const vw = video.videoWidth || 640;
+      const vh = video.videoHeight || 480;
+      if (canvas.width !== vw || canvas.height !== vh) {
+        canvas.width = vw;
+        canvas.height = vh;
+      }
+    };
+
     // If preloaded resources are available, use them directly (skips heavy init)
     if (preloadedStream && preloadedLandmarker) {
       poseLandmarkerRef.current = preloadedLandmarker;
@@ -22,6 +35,7 @@ export default function CameraDetector({ onPoseUpdate, preloadedStream, preloade
         videoRef.current.srcObject = preloadedStream;
         videoRef.current.onloadedmetadata = () => {
           videoRef.current.play();
+          syncCanvasOnce();
           setIsLoaded(true);
           predictWebcam();
         };
@@ -75,6 +89,7 @@ export default function CameraDetector({ onPoseUpdate, preloadedStream, preloade
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => {
             videoRef.current.play();
+            syncCanvasOnce();
             setIsLoaded(true);
             predictWebcam();
           };
@@ -111,7 +126,9 @@ export default function CameraDetector({ onPoseUpdate, preloadedStream, preloade
     }
 
     const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const cw = canvas.width;
+    const ch = canvas.height;
+    ctx.clearRect(0, 0, cw, ch);
 
     let leftWrist = null;
     let rightWrist = null;
@@ -126,8 +143,8 @@ export default function CameraDetector({ onPoseUpdate, preloadedStream, preloade
       if (leftWrist && leftWrist.visibility > 0.4) {
         smoothLeftRef.current.x += (leftWrist.x - smoothLeftRef.current.x) * SMOOTH;
         smoothLeftRef.current.y += (leftWrist.y - smoothLeftRef.current.y) * SMOOTH;
-        const sx = smoothLeftRef.current.x * canvas.width;
-        const sy = smoothLeftRef.current.y * canvas.height;
+        const sx = smoothLeftRef.current.x * cw;
+        const sy = smoothLeftRef.current.y * ch;
         // Neon ring with glow
         ctx.strokeStyle = '#ff0055';
         ctx.lineWidth = 3;
@@ -147,8 +164,8 @@ export default function CameraDetector({ onPoseUpdate, preloadedStream, preloade
       if (rightWrist && rightWrist.visibility > 0.4) {
         smoothRightRef.current.x += (rightWrist.x - smoothRightRef.current.x) * SMOOTH;
         smoothRightRef.current.y += (rightWrist.y - smoothRightRef.current.y) * SMOOTH;
-        const sx = smoothRightRef.current.x * canvas.width;
-        const sy = smoothRightRef.current.y * canvas.height;
+        const sx = smoothRightRef.current.x * cw;
+        const sy = smoothRightRef.current.y * ch;
         // Neon ring with glow
         ctx.strokeStyle = '#0055ff';
         ctx.lineWidth = 3;
@@ -167,10 +184,10 @@ export default function CameraDetector({ onPoseUpdate, preloadedStream, preloade
       
       // Animated dashed connection line between wrists
       if (leftWrist && rightWrist && leftWrist.visibility > 0.4 && rightWrist.visibility > 0.4) {
-        const lx = smoothLeftRef.current.x * canvas.width;
-        const ly = smoothLeftRef.current.y * canvas.height;
-        const rx = smoothRightRef.current.x * canvas.width;
-        const ry = smoothRightRef.current.y * canvas.height;
+        const lx = smoothLeftRef.current.x * cw;
+        const ly = smoothLeftRef.current.y * ch;
+        const rx = smoothRightRef.current.x * cw;
+        const ry = smoothRightRef.current.y * ch;
         ctx.strokeStyle = 'rgba(17, 17, 17, 0.25)';
         ctx.lineWidth = 2;
         ctx.setLineDash([8, 6]);

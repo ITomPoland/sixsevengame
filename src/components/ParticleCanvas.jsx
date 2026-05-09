@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 
 const COLORS = ['#ff00a0', '#d4ff00', '#00e676', '#0055ff', '#ffffff'];
+const MAX_PARTICLES = 80;
 
 const ParticleCanvas = forwardRef(({ active = true }, ref) => {
   const canvasRef = useRef(null);
@@ -8,22 +9,26 @@ const ParticleCanvas = forwardRef(({ active = true }, ref) => {
   const animFrameRef = useRef(null);
 
   useImperativeHandle(ref, () => ({
-    emit(xNorm, yNorm, count = 18) {
+    emit(xNorm, yNorm, count = 12) {
       const canvas = canvasRef.current;
       if (!canvas) return;
+      const parts = particlesRef.current;
+      // Cap total particles to prevent lag
+      const budget = Math.min(count, MAX_PARTICLES - parts.length);
+      if (budget <= 0) return;
       const x = xNorm * canvas.width;
       const y = yNorm * canvas.height;
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < budget; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = 2 + Math.random() * 5;
-        particlesRef.current.push({
+        const speed = 2 + Math.random() * 4;
+        parts.push({
           x, y,
           vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed - 2.5,
+          vy: Math.sin(angle) * speed - 2,
           life: 1,
-          decay: 0.014 + Math.random() * 0.016,
-          size: 3 + Math.random() * 6,
-          color: COLORS[Math.floor(Math.random() * COLORS.length)],
+          decay: 0.018 + Math.random() * 0.018,
+          size: 3 + Math.random() * 5,
+          color: COLORS[(Math.random() * COLORS.length) | 0],
           isSquare: Math.random() > 0.45,
           rotation: Math.random() * Math.PI * 2,
           rotSpeed: (Math.random() - 0.5) * 0.15,
@@ -35,13 +40,17 @@ const ParticleCanvas = forwardRef(({ active = true }, ref) => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
 
     const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
       const parts = particlesRef.current;
+      let len = parts.length;
 
-      for (let i = parts.length - 1; i >= 0; i--) {
+      // Update and draw — swap-and-pop for O(1) removal
+      for (let i = len - 1; i >= 0; i--) {
         const p = parts[i];
         p.vy += 0.12;
         p.x += p.vx;
@@ -50,12 +59,17 @@ const ParticleCanvas = forwardRef(({ active = true }, ref) => {
         p.life -= p.decay;
         p.rotation += p.rotSpeed;
 
-        if (p.life <= 0) { parts.splice(i, 1); continue; }
+        if (p.life <= 0) {
+          // Swap with last and pop — O(1) instead of splice O(n)
+          parts[i] = parts[len - 1];
+          parts.pop();
+          len--;
+          continue;
+        }
 
         ctx.globalAlpha = Math.min(1, p.life * 1.5);
         ctx.fillStyle = p.color;
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = p.color;
+        // No shadowBlur — too expensive on mobile GPU
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rotation);
@@ -71,7 +85,6 @@ const ParticleCanvas = forwardRef(({ active = true }, ref) => {
       }
 
       ctx.globalAlpha = 1;
-      ctx.shadowBlur = 0;
       animFrameRef.current = requestAnimationFrame(animate);
     };
 
@@ -95,3 +108,4 @@ const ParticleCanvas = forwardRef(({ active = true }, ref) => {
 
 ParticleCanvas.displayName = 'ParticleCanvas';
 export default ParticleCanvas;
+

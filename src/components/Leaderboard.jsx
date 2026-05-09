@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 
-const Leaderboard = ({ leaderboard }) => {
+const Leaderboard = forwardRef(({ leaderboard }, ref) => {
   // Always pad the leaderboard array to exactly 5 elements
   const paddedLeaderboard = [...(leaderboard || [])];
   while (paddedLeaderboard.length < 5) {
@@ -8,7 +8,7 @@ const Leaderboard = ({ leaderboard }) => {
   }
 
   return (
-    <div className="leaderboard-container">
+    <div className="leaderboard-container" ref={ref}>
       <h3 className="glow-text-small">🏆 TOP 5 DZISIAJ</h3>
       <ul className="leaderboard-list">
         {paddedLeaderboard.map((entry, index) => (
@@ -21,6 +21,6 @@ const Leaderboard = ({ leaderboard }) => {
       </ul>
     </div>
   );
-};
+});
 
 export default Leaderboard;

@@ -6,6 +6,8 @@ const FLAME_COLORS = [
   '#ff6b00', '#ff4400',            // orange accents
 ];
 
+const MAX_FLAME_PARTICLES = 120;
+
 const Flames = ({ active }) => {
   const canvasRef = useRef(null);
   const particlesRef = useRef([]);
@@ -19,13 +21,13 @@ const Flames = ({ active }) => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
 
     const W = canvas.width;
     const H = canvas.height;
 
     // Camera rect within the canvas (centered, with padding around for flames)
-    const pad = 140;
+    const pad = 120;
     const camX = pad;
     const camY = pad;
     const camW = W - pad * 2;
@@ -59,9 +61,9 @@ const Flames = ({ active }) => {
       return {
         x, y, vx, vy,
         life: 1,
-        decay: 0.008 + Math.random() * 0.012,
-        size: 4 + Math.random() * 10,
-        color: FLAME_COLORS[Math.floor(Math.random() * FLAME_COLORS.length)],
+        decay: 0.01 + Math.random() * 0.012,
+        size: 4 + Math.random() * 8,
+        color: FLAME_COLORS[(Math.random() * FLAME_COLORS.length) | 0],
         isSquare: Math.random() > 0.6,
         wobbleSpeed: 2 + Math.random() * 4,
         wobbleAmount: 0.3 + Math.random() * 0.8,
@@ -72,62 +74,50 @@ const Flames = ({ active }) => {
     const animate = () => {
       ctx.clearRect(0, 0, W, H);
       const parts = particlesRef.current;
+      let len = parts.length;
 
-      // Spawn new particles when active
-      if (activeRef.current) {
-        // Spawn 2-3 particles per frame for smooth continuous fire
-        const spawnCount = 2 + Math.floor(Math.random() * 2);
+      // Spawn new particles when active (reduced rate)
+      if (activeRef.current && len < MAX_FLAME_PARTICLES) {
+        const spawnCount = 1 + ((Math.random() > 0.5) ? 1 : 0);
         for (let i = 0; i < spawnCount; i++) {
           parts.push(spawnParticle());
+          len++;
         }
       }
 
       // Update and draw
-      for (let i = parts.length - 1; i >= 0; i--) {
+      for (let i = len - 1; i >= 0; i--) {
         const p = parts[i];
         p.age += 1;
         p.x += p.vx + Math.sin(p.age * 0.05 * p.wobbleSpeed) * p.wobbleAmount;
         p.y += p.vy;
-        p.vy *= 0.995; // slight deceleration
+        p.vy *= 0.995;
         p.life -= p.decay;
-        p.size *= 0.997; // shrink slightly
+        p.size *= 0.997;
 
         if (p.life <= 0 || p.size < 1) {
-          parts.splice(i, 1);
+          // Swap-and-pop
+          parts[i] = parts[len - 1];
+          parts.pop();
+          len--;
           continue;
         }
 
-        const alpha = Math.min(1, p.life * 1.8);
-        ctx.globalAlpha = alpha;
+        ctx.globalAlpha = Math.min(1, p.life * 1.8);
         ctx.fillStyle = p.color;
-        
-        // Neon glow
-        ctx.shadowBlur = 12 * alpha;
-        ctx.shadowColor = p.color;
-
-        ctx.save();
-        ctx.translate(p.x, p.y);
+        // No shadowBlur — too expensive on mobile
 
         if (p.isSquare) {
-          // Brutalist squares
           const s = p.size;
-          ctx.fillRect(-s, -s, s * 2, s * 2);
-          // Black border for brutalism
-          ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-          ctx.lineWidth = 1.5;
-          ctx.strokeRect(-s, -s, s * 2, s * 2);
+          ctx.fillRect(p.x - s, p.y - s, s * 2, s * 2);
         } else {
           ctx.beginPath();
-          ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
           ctx.fill();
         }
-
-        ctx.restore();
       }
 
       ctx.globalAlpha = 1;
-      ctx.shadowBlur = 0;
-
       animRef.current = requestAnimationFrame(animate);
     };
 
@@ -141,11 +131,12 @@ const Flames = ({ active }) => {
   return (
     <canvas
       ref={canvasRef}
-      width={920}
-      height={760}
+      width={760}
+      height={620}
       className="flames-canvas"
     />
   );
 };
 
 export default Flames;
+
