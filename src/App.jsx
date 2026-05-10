@@ -749,26 +749,26 @@ function App() {
         );
       })()}
 
+      {/* Fixed positioned elements / Footer */}
+      {screen === 'START' && (
+        <div className={`start-footer ${isExitingStart ? 'is-exiting-fixed' : ''}`}>
+          <CreatorBadge />
+          <button 
+            className="btn-secondary admin-btn"
+            onClick={handleAdminLogin}
+            title="Panel Administratora"
+          >
+            🔒 ADMIN
+          </button>
+        </div>
+      )}
+
       <main className="main-content">
         {(screen === 'START' || isPreloaderExiting) && (
           <div className={`start-layout ${isExitingStart ? 'is-exiting' : ''}`} key="start">
             {/* Ghost divs — invisible, only for position measurement */}
             <div className="card start-card" ref={startCardRef} />
             <Leaderboard ref={leaderboardRef} leaderboard={leaderboard} />
-          </div>
-        )}
-
-        {/* Fixed positioned elements / Footer */}
-        {screen === 'START' && (
-          <div className={`start-footer ${isExitingStart ? 'is-exiting-fixed' : ''}`}>
-            <CreatorBadge />
-            <button 
-              className="btn-secondary admin-btn"
-              onClick={handleAdminLogin}
-              title="Panel Administratora"
-            >
-              🔒 ADMIN
-            </button>
           </div>
         )}
 
