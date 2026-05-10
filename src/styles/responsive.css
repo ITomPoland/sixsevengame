@@ -1,27 +1,6 @@
-﻿/* ============================
+/* ============================
    RESPONSIVE — Media Queries
    ============================ */
-/* ============================
-   FOOTER LABEL
-   ============================ */
-
-.preloader__footer-label {
-  position: absolute;
-  bottom: clamp(1rem, 2.5vh, 2rem);
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.preloader__made-by {
-  font-family: var(--font-mono);
-  font-size: clamp(0.5rem, 0.7vw + 0.2rem, 0.7rem);
-  font-weight: 800;
-  letter-spacing: clamp(1.5px, 0.3vw, 3px);
-  text-transform: uppercase;
-  color: var(--neo-black);
-  opacity: 0.4;
-  white-space: nowrap;
-}
 
 /* ============================
    PRELOADER RESPONSIVE
