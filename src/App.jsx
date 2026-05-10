@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import CameraDetector from './components/CameraDetector';
 import Leaderboard from './components/Leaderboard';
 import NameInput from './components/NameInput';
@@ -15,9 +15,12 @@ import NoiseOverlay from './components/NoiseOverlay';
 import CircularTimer from './components/CircularTimer';
 import Preloader from './components/Preloader';
 import { check67Gesture } from './gameLogic';
+import useLeaderboard from './hooks/useLeaderboard';
+import useScrollLock from './hooks/useScrollLock';
+import useOdometerLayout from './hooks/useOdometerLayout';
 import './index.css';
 import { database } from './firebase';
-import { ref as dbRef, onValue, push, set, serverTimestamp } from 'firebase/database';
+import { ref as dbRef, push, set, serverTimestamp } from 'firebase/database';
 
 // ── Game Constants ──────────────────────────────────────────
 const GAME_DURATION = 15;          // seconds of gameplay
@@ -35,53 +38,61 @@ function App() {
   const [screen, setScreen] = useState('PRELOADING');
   const [preloaderProgress, setPreloaderProgress] = useState(0);
   const [isPreloaderExiting, setIsPreloaderExiting] = useState(false);
-  
-  // Odometer FLIP-lite refs & state
-  const startCardRef = useRef(null);
-  const leaderboardRef = useRef(null);
-  const speedGameRef = useRef(null);
-  const [targetCoords, setTargetCoords] = useState({ left: {}, center: {}, right: {} });
-  const [slotsLanded, setSlotsLanded] = useState(false);
-  const [slotsRevealed, setSlotsRevealed] = useState(false);
 
-  const preloadedStreamRef = useRef(null);
-  const preloadedLandmarkerRef = useRef(null);
-  const [score, setScore] = useState(0);
-  const [calibrationCount, setCalibrationCount] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
-  const [countdownTime, setCountdownTime] = useState(COUNTDOWN_SECONDS);
-  const [showStartText, setShowStartText] = useState(false);
-  const [showEndText, setShowEndText] = useState(false);
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [combo, setCombo] = useState(0);
-  const [photoDataUrl, setPhotoDataUrl] = useState(null);
-  const [playerName, setPlayerName] = useState('');
-  const [showCertificate, setShowCertificate] = useState(false);
-  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState(null);
-  const [isLoadingSession, setIsLoadingSession] = useState(false);
+  // ── Transition state (must be declared before hooks that depend on it) ──
   const [isExitingStart, setIsExitingStart] = useState(false);
   const [isExitingGame, setIsExitingGame] = useState(false);
   const [isExitingNameInput, setIsExitingNameInput] = useState(false);
   const [isExitingResult, setIsExitingResult] = useState(false);
   const [isReturningToMenu, setIsReturningToMenu] = useState(false);
 
+  // ── Custom Hooks ──────────────────────────────────────────
+  const leaderboard = useLeaderboard(MAX_LEADERBOARD_ENTRIES);
+  const lockScrollForAnimation = useScrollLock(screen);
+
+  // Odometer FLIP-lite refs
+  const startCardRef = useRef(null);
+  const leaderboardRef = useRef(null);
+  const speedGameRef = useRef(null);
+
+  const { targetCoords, slotsRevealed } = useOdometerLayout({
+    screen,
+    isPreloaderExiting,
+    isReturningToMenu,
+    startCardRef,
+    leaderboardRef,
+    speedGameRef,
+  });
+
+  // ── Preloaded resources ───────────────────────────────────
+  const preloadedStreamRef = useRef(null);
+  const preloadedLandmarkerRef = useRef(null);
+
+  // ── Game state ────────────────────────────────────────────
+  const [score, setScore] = useState(0);
+  const [calibrationCount, setCalibrationCount] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
+  const [countdownTime, setCountdownTime] = useState(COUNTDOWN_SECONDS);
+  const [showStartText, setShowStartText] = useState(false);
+  const [showEndText, setShowEndText] = useState(false);
+  const [combo, setCombo] = useState(0);
+  const [photoDataUrl, setPhotoDataUrl] = useState(null);
+  const [playerName, setPlayerName] = useState('');
+  const [showCertificate, setShowCertificate] = useState(false);
+  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState(null);
+
+  // ── Performance refs (avoid re-renders on every frame) ───
   const photoCapturedRef = useRef(false);
   const calibrationRef = useRef(0);
-  
-  // Refs to avoid re-renders on every frame
   const lastGestureRef = useRef('neutral');
   const scoreRef = useRef(0);
   const screenRef = useRef('START');
   const isGameOverRef = useRef(false);
-  
-  // Cache for wrists to handle frame drops during fast motion
   const lastLeftWristRef = useRef(null);
   const lastRightWristRef = useRef(null);
-  
-  // Ref to camera container for imperative animation (bump)
   const cameraWrapperRef = useRef(null);
 
-  // Effect system refs — anti-epilepsy throttling
+  // ── Effect system refs (anti-epilepsy throttling) ────────
   const particleRef = useRef(null);
   const floatingScoresRef = useRef(null);
   const shockwaveRef = useRef(null);
@@ -90,24 +101,8 @@ function App() {
   const comboRef = useRef(0);
   const lastScoreTimeRef = useRef(0);
   const comboTimeoutRef = useRef(null);
-  const animationLockTimeoutRef = useRef(null);
 
-  const lockScrollForAnimation = (duration = 1000) => {
-    document.documentElement.classList.add('is-animating');
-    document.body.classList.add('is-animating');
-    if (animationLockTimeoutRef.current) clearTimeout(animationLockTimeoutRef.current);
-    animationLockTimeoutRef.current = setTimeout(() => {
-      document.documentElement.classList.remove('is-animating');
-      document.body.classList.remove('is-animating');
-    }, duration);
-  };
-
-  // Lock scroll on mount and screen changes to prevent scrollbar flashing
-  useLayoutEffect(() => {
-    lockScrollForAnimation(1200);
-  }, [screen]);
-
-  // Load leaderboard on mount and check URL for QR certificate
+  // Check URL for QR certificate deep-link on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     
@@ -123,135 +118,13 @@ function App() {
       
       setShowCertificate(true);
       window.history.replaceState({}, document.title, window.location.pathname);
-    } 
-
-    // Live subscription to Firebase Realtime Database leaderboard
-    const leaderboardRef = dbRef(database, 'leaderboard');
-    const unsubscribe = onValue(leaderboardRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        // Convert snapshot to array, sort by score descending, take top N
-        const topScores = Object.keys(data).map(key => ({
-          id: key,
-          ...data[key]
-        }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, MAX_LEADERBOARD_ENTRIES);
-        
-        setLeaderboard(topScores);
-      } else {
-        setLeaderboard([]);
-      }
-    });
-
-    return () => unsubscribe();
+    }
   }, []);
 
-  // Sync refs with state
+  // Sync screen ref for use in animation frame callbacks
   useEffect(() => {
     screenRef.current = screen;
   }, [screen]);
-
-  // Measure preloader positioning — compute hero offset & odometer Y from actual viewport
-  useLayoutEffect(() => {
-    if (screen === 'PRELOADING' && !isPreloaderExiting) {
-      const measurePreloader = () => {
-        const vh = window.innerHeight;
-        const vw = window.innerWidth;
-        const marqueeEl = document.querySelector('.marquee-3d-container');
-        const heroEl = document.querySelector('.hero-67');
-        if (!marqueeEl || !heroEl) return;
-
-        const marqueeH = marqueeEl.offsetHeight;
-        const available = vh - marqueeH;
-
-        // Hero natural center Y (without any CSS transform)
-        // offsetTop is unaffected by transforms
-        const headerEl = heroEl.closest('.header');
-        const heroNaturalCenterY = marqueeH + (headerEl ? heroEl.offsetTop : 0) + heroEl.offsetHeight / 2;
-
-        // Target: hero center at ~30% of available space below marquee
-        const heroTargetY = marqueeH + available * 0.30;
-        const heroOffset = Math.max(0, heroTargetY - heroNaturalCenterY);
-
-        // Scale: larger on big screens, smaller on small
-        const heroScale = vw > 768 ? 1.3 : vw > 480 ? 1.1 : 1.0;
-
-        // Target: odometer center at ~55% of available space below marquee
-        const odoTargetY = marqueeH + available * 0.55;
-
-        // Odometer slot spacing based on viewport width
-        const odoSpacing = Math.min(vw * 0.08, 112); // max ~7rem=112px
-
-        // Horizon lines Y: ~72% of available space
-        const horizonY = marqueeH + available * 0.72;
-
-        const root = document.documentElement;
-        root.style.setProperty('--pl-hero-offset', `${heroOffset}px`);
-        root.style.setProperty('--pl-hero-scale', `${heroScale}`);
-        root.style.setProperty('--pl-odo-y', `${odoTargetY}px`);
-        root.style.setProperty('--pl-odo-spacing', `${odoSpacing}px`);
-        root.style.setProperty('--pl-horizon-y', `${horizonY}px`);
-        root.style.setProperty('--pl-content-top', `${odoTargetY + available * 0.12}px`);
-      };
-
-      measurePreloader();
-      requestAnimationFrame(measurePreloader);
-      window.addEventListener('resize', measurePreloader);
-      return () => {
-        window.removeEventListener('resize', measurePreloader);
-        // Clean up CSS vars
-        const root = document.documentElement;
-        ['--pl-hero-offset','--pl-hero-scale','--pl-odo-y','--pl-odo-spacing','--pl-horizon-y','--pl-content-top'].forEach(v => root.style.removeProperty(v));
-      };
-    }
-  }, [screen, isPreloaderExiting]);
-
-  // Measure Odometer targets whenever we start transitioning or enter START
-  useLayoutEffect(() => {
-    if (screen === 'START' || isPreloaderExiting) {
-      const measureAnchors = () => {
-        const getCenter = (ref) => {
-          if (!ref.current) return {};
-          const rect = ref.current.getBoundingClientRect();
-          const computedStyle = window.getComputedStyle(ref.current);
-          return { 
-            x: rect.left + window.scrollX + rect.width / 2, 
-            y: rect.top + window.scrollY + rect.height / 2,
-            w: rect.width,
-            h: rect.height,
-            br: computedStyle.borderRadius
-          };
-        };
-
-        setTargetCoords({
-          left: getCenter(startCardRef),
-          right: getCenter(leaderboardRef),
-          center: getCenter(speedGameRef)
-        });
-      };
-
-      // Measure immediately and on resize
-      measureAnchors();
-      // Use requestAnimationFrame to ensure layout is fully settled after rendering
-      requestAnimationFrame(measureAnchors);
-      
-      window.addEventListener('resize', measureAnchors);
-      return () => window.removeEventListener('resize', measureAnchors);
-    }
-  }, [screen, isPreloaderExiting]);
-
-  // Phase 2: Start curtain reveal 800ms after flight starts (100ms before landing)
-  useEffect(() => {
-    if (isPreloaderExiting) {
-      const timer = setTimeout(() => setSlotsRevealed(true), 800);
-      return () => clearTimeout(timer);
-    } else if (screen === 'START' && isReturningToMenu) {
-      setSlotsRevealed(true);
-    } else if (screen !== 'START') {
-      setSlotsRevealed(false);
-    }
-  }, [isPreloaderExiting, screen, isReturningToMenu]);
 
   useEffect(() => {
     scoreRef.current = score;
