@@ -23,4 +23,5 @@ const Leaderboard = forwardRef(({ leaderboard }, ref) => {
   );
 });
 
+Leaderboard.displayName = 'Leaderboard';
 export default Leaderboard;

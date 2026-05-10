@@ -55,7 +55,7 @@ const AdminPanel = ({ onBack }) => {
     try {
       await signOut(auth);
     } catch (err) {
-      console.error("Błąd wylogowania", err);
+      console.error("Logout error", err);
     }
   };
 
@@ -64,8 +64,8 @@ const AdminPanel = ({ onBack }) => {
       try {
         await remove(dbRef(database, `leaderboard/${id}`));
       } catch (error) {
-        console.error("Błąd podczas usuwania:", error);
-        alert("Wystąpił błąd podczas usuwania wpisu.");
+        console.error("Error deleting entry:", error);
+        alert("An error occurred while deleting the entry.");
       }
     }
   };

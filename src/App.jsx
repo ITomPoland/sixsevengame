@@ -19,6 +19,18 @@ import './index.css';
 import { database } from './firebase';
 import { ref as dbRef, onValue, push, set, serverTimestamp } from 'firebase/database';
 
+// ── Game Constants ──────────────────────────────────────────
+const GAME_DURATION = 15;          // seconds of gameplay
+const COUNTDOWN_SECONDS = 3;       // pre-game countdown
+const CALIBRATION_THRESHOLD = 5;   // gestures needed to start
+const MAX_SCORE = 250;             // hard cap on score
+const MAX_LEADERBOARD_ENTRIES = 5; // top N shown in leaderboard
+const COMBO_WINDOW_MS = 1200;      // ms to chain combos
+const COMBO_RESET_MS = 1500;       // ms of inactivity to reset combo
+const EFFECT_THROTTLE_MS = 400;    // min ms between visual effect bursts
+const EXIT_ANIM_MS = 600;          // exit animation duration
+const SHOCKWAVE_INTERVAL = 7;      // score interval for shockwave + camera bump
+
 function App() {
   const [screen, setScreen] = useState('PRELOADING');
   const [preloaderProgress, setPreloaderProgress] = useState(0);
@@ -36,8 +48,8 @@ function App() {
   const preloadedLandmarkerRef = useRef(null);
   const [score, setScore] = useState(0);
   const [calibrationCount, setCalibrationCount] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(15);
-  const [countdownTime, setCountdownTime] = useState(3);
+  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
+  const [countdownTime, setCountdownTime] = useState(COUNTDOWN_SECONDS);
   const [showStartText, setShowStartText] = useState(false);
   const [showEndText, setShowEndText] = useState(false);
   const [leaderboard, setLeaderboard] = useState([]);
@@ -52,7 +64,7 @@ function App() {
   const [isExitingNameInput, setIsExitingNameInput] = useState(false);
   const [isExitingResult, setIsExitingResult] = useState(false);
   const [isReturningToMenu, setIsReturningToMenu] = useState(false);
-  const MAX_LEADERBOARD_ENTRIES = 5;
+
   const photoCapturedRef = useRef(false);
   const calibrationRef = useRef(0);
   
@@ -113,12 +125,12 @@ function App() {
       window.history.replaceState({}, document.title, window.location.pathname);
     } 
 
-    // Subskrypcja na żywo do globalnego rankingu Firebase Realtime Database
+    // Live subscription to Firebase Realtime Database leaderboard
     const leaderboardRef = dbRef(database, 'leaderboard');
     const unsubscribe = onValue(leaderboardRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        // Konwertuj obiekt na tablicę, posortuj po wyniku malejąco i weź top 5
+        // Convert snapshot to array, sort by score descending, take top N
         const topScores = Object.keys(data).map(key => ({
           id: key,
           ...data[key]
@@ -245,7 +257,7 @@ function App() {
     scoreRef.current = score;
   }, [score]);
 
-  // 1. Obsługa samego tykania zegara
+  // 1. Countdown and game timer tick handler
   useEffect(() => {
     let timer;
     if (screen === 'COUNTDOWN' && countdownTime > 0) {
@@ -256,14 +268,14 @@ function App() {
     return () => clearInterval(timer);
   }, [screen, countdownTime > 0, timeLeft > 0]);
 
-  // 2. Przejście po zakończeniu COUNTDOWN
+  // 2. Transition after COUNTDOWN ends
   useEffect(() => {
     if (screen === 'COUNTDOWN' && countdownTime === 0) {
       // Reset ALL refs directly — useEffect sync is async and too late
       isGameOverRef.current = false;
       setScore(0);
       scoreRef.current = 0;
-      setTimeLeft(15);
+      setTimeLeft(GAME_DURATION);
       setCombo(0);
       comboRef.current = 0;
       pendingScoreRef.current = 0;
@@ -286,7 +298,7 @@ function App() {
     }
   }, [timeLeft, screen]);
 
-  // 4. Przejście po zakończeniu czasu w grze
+  // 4. Transition after game time runs out
   useEffect(() => {
     if (screen === 'PLAYING' && timeLeft === 0 && !showEndText) {
       isGameOverRef.current = true;
@@ -295,14 +307,14 @@ function App() {
       
       setShowEndText(true);
       
-      // Pokazujemy napis KONIEC! na ekranie i po 2 sekundach odpalamy wyjście
+      // Show "KONIEC!" overlay, then trigger exit after 2s
       setTimeout(() => {
         // Delay screen transition for exit animation
         setIsExitingGame(true);
         lockScrollForAnimation(1200); // Lock during exit + entry
         setTimeout(() => {
           setIsExitingGame(false);
-          setShowEndText(false); // reset stanu
+          setShowEndText(false); // reset state
           setScreen('NAME_INPUT');
         }, 600);
       }, 2000);
@@ -321,7 +333,7 @@ function App() {
       ctx.scale(-1, 1); // mirror to match display
       ctx.drawImage(video, -640, 0, 640, 480);
       ctx.restore();
-      // Zoptymalizowana kompresja WEBP (mniejszy rozmiar, świetna jakość)
+      // Optimized WEBP compression (smaller size, great quality)
       const dataUrl = canvas.toDataURL('image/webp', 0.80);
       setPhotoDataUrl(dataUrl);
       photoCapturedRef.current = true;
@@ -337,8 +349,8 @@ function App() {
     // Accumulate pending score for batched visual
     pendingScoreRef.current += 1;
     
-    // Combo system — 1.2s window
-    if (now - lastScoreTimeRef.current < 1200) {
+    // Combo system — COMBO_WINDOW_MS window
+    if (now - lastScoreTimeRef.current < COMBO_WINDOW_MS) {
       comboRef.current += 1;
     } else {
       comboRef.current = 1;
@@ -351,10 +363,10 @@ function App() {
     comboTimeoutRef.current = setTimeout(() => {
       comboRef.current = 0;
       setCombo(0);
-    }, 1500);
+    }, COMBO_RESET_MS);
 
-    // Throttle visual bursts: max every 400ms (~2.5/sec) — reduced for mobile perf
-    if (now - lastEffectTimeRef.current < 400) return;
+    // Throttle visual bursts to prevent epilepsy on mobile
+    if (now - lastEffectTimeRef.current < EFFECT_THROTTLE_MS) return;
     lastEffectTimeRef.current = now;
     
     const pending = pendingScoreRef.current;
@@ -373,13 +385,13 @@ function App() {
       floatingScoresRef.current.add(pending);
     }
 
-    // 3. Shockwave ring every 7 points (was 5 — less frequent = less GPU load)
-    if (newScore % 7 === 0 && shockwaveRef.current) {
+    // 3. Shockwave ring every SHOCKWAVE_INTERVAL points
+    if (newScore % SHOCKWAVE_INTERVAL === 0 && shockwaveRef.current) {
       shockwaveRef.current.trigger();
     }
 
-    // 4. Camera bump every 7 points
-    if (newScore % 7 === 0 && cameraWrapperRef.current) {
+    // 4. Camera bump every SHOCKWAVE_INTERVAL points
+    if (newScore % SHOCKWAVE_INTERVAL === 0 && cameraWrapperRef.current) {
       cameraWrapperRef.current.classList.remove('camera-bump');
       void cameraWrapperRef.current.offsetWidth;
       cameraWrapperRef.current.classList.add('camera-bump');
@@ -416,13 +428,13 @@ function App() {
         const newCal = calibrationRef.current + 1;
         calibrationRef.current = newCal;
         setCalibrationCount(newCal);
-        if (newCal >= 5) {
-          setCountdownTime(3);
+        if (newCal >= CALIBRATION_THRESHOLD) {
+          setCountdownTime(COUNTDOWN_SECONDS);
           setScreen('COUNTDOWN');
         }
       } else if (screenRef.current === 'PLAYING') {
         // Increment score, capped at 250
-        const newScore = Math.min(scoreRef.current + 1, 250);
+        const newScore = Math.min(scoreRef.current + 1, MAX_SCORE);
         setScore(newScore);
         
         // Trigger all visual effects (throttled internally)
@@ -443,13 +455,13 @@ function App() {
     // Animate out for 600ms
     setTimeout(() => {
       setIsExitingNameInput(false);
-      setScreen('RESULT'); // Pokazujemy rezultat w tle leci upload
+      setScreen('RESULT'); // Show result screen while upload runs in background
     }, 600);
     
     try {
       let photoUrl = null;
       
-      // 1. Upload zdjecia na ImgBB (Klucz ukryty w Base64 przed botami z GitHuba)
+      // 1. Upload photo to ImgBB (key obfuscated to avoid GitHub bot scraping)
       if (photoDataUrl) {
         const apiKey = atob('NjNjYjdjYzlmYTYyYjg1NzY4MmJkOGMyZjFlZTE4YjM=');
         const formData = new FormData();
@@ -468,7 +480,7 @@ function App() {
         }
       }
       
-      // 2. Zapisujemy do globalnego rankingu (Realtime Database)
+      // 2. Save to global leaderboard (Firebase Realtime Database)
       const newScoreRef = push(dbRef(database, 'leaderboard'));
       await set(newScoreRef, {
         name,
@@ -479,7 +491,7 @@ function App() {
       });
       
     } catch (e) {
-      console.error("Blad przy zapisie wyniku lub uploadzie zdjecia:", e);
+      console.error("Error saving score or uploading photo:", e);
     }
   };
 
@@ -489,7 +501,7 @@ function App() {
     calibrationRef.current = 0;
     setScore(0);
     setCalibrationCount(0);
-    setTimeLeft(15);
+    setTimeLeft(GAME_DURATION);
     setCombo(0);
     comboRef.current = 0;
     pendingScoreRef.current = 0;

@@ -99,7 +99,7 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
     // Draw photo if available (from base64 or ImgBB URL)
     if (photoSource) {
       const img = new Image();
-      // Obejście problemów CORS na płótnie, gdy obraz jest ładowany z obcego URL
+      // CORS workaround: set crossOrigin for external URLs to keep canvas tainted-safe
       if (photoSource.startsWith('http')) {
         img.crossOrigin = "anonymous";
       }
@@ -119,7 +119,7 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
       };
       
       img.onerror = () => {
-        // Jeśli obraz zawiedzie (np. blokada CORS w niektórych przeglądarkach), rysujemy ikonę
+        // If image fails (e.g. CORS block in some browsers), draw a fallback icon
         drawFallbackCamera(ctx, photoX, photoY, photoW, photoH);
         finishDraw(ctx, W, H);
       };

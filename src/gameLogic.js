@@ -1,8 +1,7 @@
 export const check67Gesture = (leftWrist, rightWrist) => {
   if (!leftWrist || !rightWrist) return 'neutral';
   
-  // Zmniejszamy próg (threshold) do 0.05 (5% wysokości ekranu)
-  // Dzięki temu zliczy nawet szybkie, małe ruchy w poziomie
+  // Low threshold (5% of screen height) to detect even quick, small lateral movements
   const threshold = 0.05; 
   
   const leftHigher = leftWrist.y < rightWrist.y - threshold;

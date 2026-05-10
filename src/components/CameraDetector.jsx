@@ -72,7 +72,7 @@ export default function CameraDetector({ onPoseUpdate, preloadedStream, preloade
         
         startCamera();
       } catch (e) {
-        console.error("Blad ladowania MediaPipe", e);
+        console.error("MediaPipe initialization failed", e);
       }
     };
 
@@ -95,7 +95,7 @@ export default function CameraDetector({ onPoseUpdate, preloadedStream, preloade
           };
         }
       } catch (err) {
-        console.error("Blad kamery:", err);
+        console.error("Camera error:", err);
       }
     };
 
@@ -136,8 +136,8 @@ export default function CameraDetector({ onPoseUpdate, preloadedStream, preloade
     if (results && results.landmarks && results.landmarks.length > 0) {
       const landmarks = results.landmarks[0];
       
-      leftWrist = landmarks[15]; // lewy nadgarstek
-      rightWrist = landmarks[16]; // prawy nadgarstek
+      leftWrist = landmarks[15]; // left wrist
+      rightWrist = landmarks[16]; // right wrist
 
       // Smoothed wrist drawing — EMA for stability
       if (leftWrist && leftWrist.visibility > 0.4) {
@@ -200,8 +200,8 @@ export default function CameraDetector({ onPoseUpdate, preloadedStream, preloade
       }
     }
 
-    // Przekaż nadgarstki do App.jsx (jeżeli zgubiono z powodu widoczności, zostanie przesłane null)
-    // Zostawiamy weryfikację widoczności do nadrzędnego komponentu
+    // Forward wrist positions to App.jsx (null if visibility too low)
+    // Visibility threshold check is done here; parent handles game logic
     onPoseUpdate(
        leftWrist && leftWrist.visibility > 0.4 ? leftWrist : null, 
        rightWrist && rightWrist.visibility > 0.4 ? rightWrist : null

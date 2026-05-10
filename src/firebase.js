@@ -10,8 +10,8 @@ const firebaseConfig = {
   messagingSenderId: "228795528490",
   appId: "1:228795528490:web:9eadbb74f663fceb5eda53",
   measurementId: "G-B1BRYH4E44",
-  // Firebase zazwyczaj automatycznie wykrywa URL, ale czasami lepiej podać wprost dla RTDB
-  databaseURL: "https://sixsevengame-a5461-default-rtdb.europe-west1.firebasedatabase.app" // Domyslny format dla eu
+  // Explicit RTDB URL for EU region (Firebase may not auto-detect for Realtime Database)
+  databaseURL: "https://sixsevengame-a5461-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
 // Initialize Firebase
