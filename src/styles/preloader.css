@@ -245,6 +245,7 @@
   animation: slotExitRight 0.4s cubic-bezier(0.75, 0, 0.25, 1) 0.1s forwards;
 }
 
+/* Slot exit keyframes — GPU-only: transform + opacity, NO filter:blur() */
 @keyframes slotExitLeft {
   from {
     transform: translate(calc(var(--target-x, 25vw) - 50%), calc(var(--target-y, 50vh) - 50%));
@@ -253,7 +254,6 @@
   to { 
     transform: translate(calc(var(--target-x, 25vw) - 50% - 150px), calc(var(--target-y, 50vh) - 50% + 50px)) rotate(-15deg) scale(0.8);
     opacity: 0; 
-    filter: blur(4px);
   }
 }
 
@@ -265,7 +265,6 @@
   to { 
     transform: translate(calc(var(--target-x, 50vw) - 50%), calc(var(--target-y, 110px) - 50% - 40px)) rotate(-3deg) scale(0.9);
     opacity: 0; 
-    filter: blur(4px);
   }
 }
 
@@ -277,7 +276,6 @@
   to { 
     transform: translate(calc(var(--target-x, 75vw) - 50% + 150px), calc(var(--target-y, 50vh) - 50% + 50px)) rotate(15deg) scale(0.8);
     opacity: 0; 
-    filter: blur(4px);
   }
 }
 
@@ -297,16 +295,15 @@
   display: none !important;
 }
 
+/* Slot return keyframes — GPU-only: transform + opacity, NO filter:blur() */
 @keyframes slotReturnLeft {
   from { 
     transform: translate(calc(var(--target-x, 25vw) - 50% - 150px), calc(var(--target-y, 50vh) - 50% + 100px)) rotate(-25deg) scale(0.8);
     opacity: 0; 
-    filter: blur(8px);
   }
   to { 
     transform: translate(calc(var(--target-x, 25vw) - 50%), calc(var(--target-y, 50vh) - 50%));
     opacity: 1; 
-    filter: blur(0);
   }
 }
 
@@ -314,12 +311,10 @@
   from { 
     transform: translate(calc(var(--target-x, 50vw) - 50%), calc(var(--target-y, 110px) - 50% - 40px)) rotate(-10deg) scale(0.85);
     opacity: 0; 
-    filter: blur(8px);
   }
   to { 
     transform: translate(calc(var(--target-x, 50vw) - 50%), calc(var(--target-y, 110px) - 50%)) rotate(-3deg) scale(1);
     opacity: 1; 
-    filter: blur(0);
   }
 }
 
@@ -327,12 +322,10 @@
   from { 
     transform: translate(calc(var(--target-x, 75vw) - 50% + 150px), calc(var(--target-y, 50vh) - 50% + 100px)) rotate(25deg) scale(0.8);
     opacity: 0; 
-    filter: blur(8px);
   }
   to { 
     transform: translate(calc(var(--target-x, 75vw) - 50%), calc(var(--target-y, 50vh) - 50%));
     opacity: 1; 
-    filter: blur(0);
   }
 }
 
@@ -411,7 +404,8 @@
   box-shadow: clamp(3px, 0.5vw, 6px) clamp(3px, 0.5vw, 6px) 0px var(--neo-black);
   position: relative;
   contain: layout paint style;
-  will-change: transform, width, height, border-radius;
+  /* Only GPU-acceleratable property in will-change — width/height can't be GPU-accelerated */
+  will-change: transform;
 }
 
 .odometer__digit-track {
@@ -537,15 +531,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: rgba(17, 17, 17, 0.85);
-  backdrop-filter: blur(8px);
+  /* Dense solid background instead of backdrop-filter blur — zero GPU cost */
+  background: rgba(17, 17, 17, 0.88);
   padding: 2rem;
   animation: overlayFadeIn 0.4s ease both;
 }
 
 @keyframes overlayFadeIn {
-  0% { opacity: 0; backdrop-filter: blur(0px); }
-  100% { opacity: 1; backdrop-filter: blur(8px); }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 .preloader__camera-card {

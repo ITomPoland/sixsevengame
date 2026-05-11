@@ -1,4 +1,4 @@
-﻿/* ============================
+/* ============================
    COMPONENTS — Camera, Certificate, Admin, Result
    ============================ */
 /* CAMERA CONTAINER */
@@ -12,6 +12,7 @@
   box-shadow: 12px 12px 0px var(--neo-black);
   border: var(--border-width) solid var(--neo-black);
   transition: border-color 0.5s ease, box-shadow 0.5s ease;
+  contain: layout paint style;
 }
 
 .camera-video {
@@ -52,8 +53,8 @@
   color: var(--neo-pink);
   -webkit-text-stroke: 4px var(--neo-black);
   text-shadow: 8px 8px 0px var(--neo-black);
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
+  /* Solid background instead of backdrop-filter blur — drastically cheaper on GPU */
+  background: rgba(17, 17, 17, 0.55);
   z-index: var(--z-game-overlay);
   border-radius: 24px;
   animation: bgFadeIn 0.3s ease forwards;
@@ -62,12 +63,10 @@
 @keyframes bgFadeIn {
   0% {
     opacity: 0;
-    backdrop-filter: blur(0px);
   }
 
   100% {
     opacity: 1;
-    backdrop-filter: blur(8px);
   }
 }
 
@@ -229,23 +228,31 @@
   border-radius: 99px;
   transition: width 0.3s ease, background 0.5s ease;
   position: relative;
-  /* Animated candy stripes */
-  background-image: repeating-linear-gradient(-45deg,
+  overflow: hidden;
+}
+
+/* Candy stripes via pseudo-element with GPU-accelerated translateX instead of background-position */
+.progress-fill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(-45deg,
       transparent,
       transparent 6px,
       rgba(255, 255, 255, 0.2) 6px,
       rgba(255, 255, 255, 0.2) 12px);
-  background-size: 200% 100%;
-  animation: stripeScroll 1.5s linear infinite;
+  /* Width 200% so translateX can loop seamlessly */
+  width: 200%;
+  animation: stripeSlide 1.5s linear infinite;
 }
 
-@keyframes stripeScroll {
+@keyframes stripeSlide {
   0% {
-    background-position: 0 0;
+    transform: translateX(0);
   }
 
   100% {
-    background-position: 34px 0;
+    transform: translateX(-50%);
   }
 }
 
@@ -258,6 +265,7 @@
   height: 6px;
   background: rgba(255, 255, 255, 0.4);
   border-radius: 99px;
+  z-index: 1;
 }
 
 .progress-marker {
@@ -770,14 +778,12 @@
 @keyframes cameraDropIn {
   0% {
     opacity: 0;
-    transform: scale(0.9) translateY(60px) rotate(3deg);
-    filter: blur(8px);
+    transform: scale(0.85) translateY(60px) rotate(3deg);
   }
 
   100% {
     opacity: 1;
     transform: scale(1) translateY(0) rotate(0deg);
-    filter: blur(0px);
   }
 }
 
@@ -800,6 +806,7 @@
   animation: brutalistCardExit 0.3s cubic-bezier(0.75, 0, 0.25, 1) forwards;
 }
 
+/* Exit keyframes — GPU-only: transform + opacity, NO filter:blur() */
 @keyframes brutalistHeroExit {
   0% {
     transform: translateY(0) scale(1);
@@ -809,7 +816,6 @@
   100% {
     transform: translateY(-40px) scale(0.9);
     opacity: 0;
-    filter: blur(4px);
   }
 }
 
@@ -817,18 +823,17 @@
   0% {
     transform: translateY(0) rotate(0deg) scale(1);
     opacity: 1;
-    filter: blur(0);
   }
 
   100% {
-    transform: translateY(30px) rotate(-4deg) scale(0.9);
+    transform: translateY(30px) rotate(-4deg) scale(0.85);
     opacity: 0;
-    filter: blur(6px);
   }
 }
 
 /* ============================
    GAME EXIT ANIMATIONS
+   GPU-only: transform + opacity, NO filter:blur()
    ============================ */
 
 .is-exiting-game .stats-bar {
@@ -852,7 +857,6 @@
   100% {
     transform: translateY(-60px);
     opacity: 0;
-    filter: blur(4px);
   }
 }
 
@@ -860,18 +864,17 @@
   0% {
     transform: translateY(0) scale(1) rotate(0deg);
     opacity: 1;
-    filter: blur(0);
   }
 
   100% {
-    transform: translateY(40px) scale(0.8) rotate(-4deg);
+    transform: translateY(40px) scale(0.7) rotate(-4deg);
     opacity: 0;
-    filter: blur(8px);
   }
 }
 
 /* ============================
    RESULT ENTRY ANIMATIONS
+   GPU-only: transform + opacity, NO filter:blur()
    ============================ */
 
 .result-card {
@@ -906,18 +909,17 @@
   0% {
     transform: translateY(40px) scale(0.9);
     opacity: 0;
-    filter: blur(6px);
   }
 
   100% {
     transform: translateY(0) scale(1);
     opacity: 1;
-    filter: blur(0);
   }
 }
 
 /* ============================
    FINAL RESULT SCREEN
+   GPU-only: transform + opacity, NO filter:blur()
    ============================ */
 
 .is-exiting-name {
@@ -928,13 +930,11 @@
   0% {
     transform: scale(1) translateY(0);
     opacity: 1;
-    filter: blur(0);
   }
 
   100% {
-    transform: scale(0.9) translateY(40px);
+    transform: scale(0.85) translateY(40px);
     opacity: 0;
-    filter: blur(8px);
   }
 }
 

@@ -1,4 +1,4 @@
-﻿/* ============================
+/* ============================
    HEADER — Marquee, Hero 67, Layout
    ============================ */
 /* ============================
@@ -190,13 +190,11 @@
   0% {
     transform: rotate(-10deg) translateY(-40px) scale(0.85);
     opacity: 0;
-    filter: blur(8px);
   }
 
   100% {
     transform: rotate(-4deg) translateY(0) scale(1);
     opacity: 1;
-    filter: blur(0);
   }
 }
 
@@ -204,13 +202,11 @@
   0% {
     transform: rotate(10deg) translateY(-40px) translateX(10px) scale(0.85);
     opacity: 0;
-    filter: blur(8px);
   }
 
   100% {
     transform: rotate(3deg) translateY(-8px) translateX(0) scale(1);
     opacity: 1;
-    filter: blur(0);
   }
 }
 

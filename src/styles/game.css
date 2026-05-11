@@ -1,4 +1,4 @@
-﻿/* ============================
+/* ============================
    GAME — HUD, Camera Effects, Cards
    ============================ */
 
@@ -13,6 +13,7 @@
   width: 100%;
   position: relative;
   overflow: visible;
+  contain: layout style;
 }
 
 /* Cardboard Texture */
@@ -360,6 +361,7 @@ p {
   width: 100%;
   max-width: 900px;
   overflow: visible;
+  contain: layout style;
 }
 
 /* ============================================
@@ -387,6 +389,7 @@ p {
   position: relative;
   z-index: var(--z-base);
   gap: clamp(0.5rem, 1vw, 1rem);
+  contain: layout paint style;
 }
 
 /* State-specific background colors */

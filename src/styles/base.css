@@ -1,4 +1,4 @@
-﻿/* ============================
+/* ============================
    BASE — Variables, Reset, Typography
    ============================ */
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
@@ -69,5 +69,18 @@ body {
 html.is-animating,
 body.is-animating {
   overflow: hidden !important;
+}
+
+/* ============================
+   GLOBAL REDUCED MOTION
+   Respects user OS preference — kills all animations for accessibility + performance.
+   ============================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 

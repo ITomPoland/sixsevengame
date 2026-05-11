@@ -34,8 +34,24 @@ const EFFECT_THROTTLE_MS = 400;    // min ms between visual effect bursts
 const EXIT_ANIM_MS = 600;          // exit animation duration
 const SHOCKWAVE_INTERVAL = 7;      // score interval for shockwave + camera bump
 
+// GPU Warmup — pre-allocates compositor layers during preloader to eliminate first-transition jank
+const GPUWarmup = React.memo(() => (
+  <div style={{ position:'fixed', top:'-9999px', left:'-9999px', width:1, height:1, pointerEvents:'none', overflow:'hidden' }} aria-hidden="true">
+    <div style={{ width:1, height:1, transform:'translateZ(0)', willChange:'transform, opacity' }} />
+    <div style={{ width:1, height:1, transform:'translateZ(0)', willChange:'transform, opacity', opacity:0.99 }} />
+    <canvas width={1} height={1} style={{ transform:'translateZ(0)' }} />
+  </div>
+));
+GPUWarmup.displayName = 'GPUWarmup';
+
 function App() {
-  const [screen, setScreen] = useState('PRELOADING');
+  // Detect cert deep-link BEFORE setting initial screen
+  const initialScreen = () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('cert') && params.has('score')) return 'CERT_ONLY';
+    return 'PRELOADING';
+  };
+  const [screen, setScreen] = useState(initialScreen);
   const [preloaderProgress, setPreloaderProgress] = useState(0);
   const [isPreloaderExiting, setIsPreloaderExiting] = useState(false);
 
@@ -103,6 +119,8 @@ function App() {
   const comboTimeoutRef = useRef(null);
 
   // Check URL for QR certificate deep-link on mount
+  // When screen is CERT_ONLY, skip preloader entirely and show only certificate
+  const isCertOnly = screen === 'CERT_ONLY';
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     
@@ -263,11 +281,13 @@ function App() {
       shockwaveRef.current.trigger();
     }
 
-    // 4. Camera bump every SHOCKWAVE_INTERVAL points
+    // 4. Camera bump every SHOCKWAVE_INTERVAL points (WAAPI — avoids offsetWidth reflow)
     if (newScore % SHOCKWAVE_INTERVAL === 0 && cameraWrapperRef.current) {
-      cameraWrapperRef.current.classList.remove('camera-bump');
-      void cameraWrapperRef.current.offsetWidth;
-      cameraWrapperRef.current.classList.add('camera-bump');
+      cameraWrapperRef.current.animate([
+        { transform: 'translateY(0) scale(1)' },
+        { transform: 'translateY(8px) scale(0.98)', boxShadow: '4px 4px 0px var(--neo-black)' },
+        { transform: 'translateY(0) scale(1)', boxShadow: '12px 12px 0px var(--neo-black)' },
+      ], { duration: 150, easing: 'ease-out' });
     }
   };
 
@@ -443,10 +463,33 @@ function App() {
   const isGameplay = screen === 'CALIBRATION' || screen === 'COUNTDOWN' || screen === 'PLAYING';
   const isPreloading = screen === 'PRELOADING';
 
+  // CERT_ONLY mode: render only the certificate overlay, nothing else
+  if (isCertOnly) {
+    return (
+      <div className="app-container">
+        <NoiseOverlay />
+        <main className="main-content">
+          {showCertificate && (
+            <Certificate
+              name={playerName || 'GRACZ'}
+              score={score}
+              photoDataUrl={photoDataUrl}
+              uploadedPhotoUrl={uploadedPhotoUrl}
+              onClose={() => setShowCertificate(false)}
+            />
+          )}
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className={`app-container ${isFireMode ? 'fire-mode' : ''} ${isWarmGlow ? 'glow-warm' : ''} ${isGameplay ? 'is-gameplay' : ''}`}>
       {/* Film grain overlay — always present */}
       <NoiseOverlay />
+
+      {/* GPU Warmup — invisible layers to pre-allocate compositor during preloader */}
+      {isPreloading && <GPUWarmup />}
       
       {/* Preloader Background and UI (renders underneath the global header) */}
       {isPreloading && (
