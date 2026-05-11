@@ -61,14 +61,15 @@ export default function Preloader({ onReady, onProgress, onExitStart }) {
       setPhase('model');
       const landmarker = await PoseLandmarker.createFromOptions(vision, {
         baseOptions: {
-          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",
           delegate: "GPU"
         },
         runningMode: "VIDEO",
         numPoses: 1,
         minPoseDetectionConfidence: 0.3,
         minPosePresenceConfidence: 0.3,
-        minTrackingConfidence: 0.3
+        minTrackingConfidence: 0.3,
+        outputSegmentationMasks: true
       });
       landmarkerRef.current = landmarker;
 

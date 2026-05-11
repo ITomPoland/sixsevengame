@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
 
-export default function CameraDetector({ onPoseUpdate, preloadedStream, preloadedLandmarker }) {
+export default function CameraDetector({ onPoseUpdate, onSegmentationMask, preloadedStream, preloadedLandmarker }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -57,14 +57,15 @@ export default function CameraDetector({ onPoseUpdate, preloadedStream, preloade
         
         const landmarker = await PoseLandmarker.createFromOptions(vision, {
           baseOptions: {
-            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",
             delegate: "GPU"
           },
           runningMode: "VIDEO",
           numPoses: 1,
           minPoseDetectionConfidence: 0.3,
           minPosePresenceConfidence: 0.3,
-          minTrackingConfidence: 0.3
+          minTrackingConfidence: 0.3,
+          outputSegmentationMasks: true
         });
         
         if (!active) return;
@@ -123,6 +124,18 @@ export default function CameraDetector({ onPoseUpdate, preloadedStream, preloade
 
     if (video.currentTime > 0) {
       results = poseLandmarker.detectForVideo(video, startTimeMs);
+    }
+
+    // Forward segmentation mask to parent for aura effect
+    if (onSegmentationMask && results && results.segmentationMasks && results.segmentationMasks.length > 0) {
+      const mask = results.segmentationMasks[0];
+      // getAsFloat32Array gives us per-pixel confidence (0.0–1.0)
+      try {
+        const maskData = mask.getAsFloat32Array();
+        onSegmentationMask(maskData, canvas.width, canvas.height);
+      } catch (e) {
+        // Mask format not supported — silently skip
+      }
     }
 
     const ctx = canvas.getContext("2d");

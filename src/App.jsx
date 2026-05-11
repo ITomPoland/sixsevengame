@@ -3,6 +3,7 @@ import CameraDetector from './components/CameraDetector';
 import Leaderboard from './components/Leaderboard';
 import NameInput from './components/NameInput';
 import Flames from './components/Flames';
+import AuraCanvas from './components/AuraCanvas';
 import ParticleCanvas from './components/ParticleCanvas';
 import FloatingScores from './components/FloatingScores';
 import ComboCounter from './components/ComboCounter';
@@ -107,6 +108,18 @@ function App() {
   const lastLeftWristRef = useRef(null);
   const lastRightWristRef = useRef(null);
   const cameraWrapperRef = useRef(null);
+
+  // ── Aura effect refs ─────────────────────────────────────
+  const segMaskRef = useRef({ data: null, w: 640, h: 480 });
+  
+  // Performance gate: only enable aura on capable hardware
+  const isAuraCapable = useRef(
+    typeof navigator !== 'undefined' &&
+    (navigator.hardwareConcurrency || 2) >= 4 &&
+    !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+  // Throttle mask updates to ~15fps to avoid React re-render storm
+  const lastMaskUpdateRef = useRef(0);
 
   // ── Effect system refs (anti-epilepsy throttling) ────────
   const particleRef = useRef(null);
@@ -462,6 +475,13 @@ function App() {
   const isWarmGlow = screen === 'PLAYING' && score >= 10 && score < 45;
   const isGameplay = screen === 'CALIBRATION' || screen === 'COUNTDOWN' || screen === 'PLAYING';
   const isPreloading = screen === 'PRELOADING';
+  const isAuraActive = screen === 'PLAYING' && combo >= 30 && isAuraCapable.current;
+
+  // ── Segmentation mask handler (no re-renders!) ──────────
+  const handleSegmentationMask = useCallback((maskData, w, h) => {
+    if (!isAuraCapable.current) return;
+    segMaskRef.current = { data: maskData, w, h };
+  }, []);
 
   // CERT_ONLY mode: render only the certificate overlay, nothing else
   if (isCertOnly) {
@@ -809,10 +829,20 @@ function App() {
               <div className="camera-inner">
                 <CameraDetector 
                   onPoseUpdate={handlePoseUpdate}
+                  onSegmentationMask={handleSegmentationMask}
                   preloadedStream={preloadedStreamRef.current}
                   preloadedLandmarker={preloadedLandmarkerRef.current}
                 />
                 
+                {/* Anime fire aura — behind particles, on top of camera */}
+                {isAuraActive && (
+                  <AuraCanvas
+                    maskRef={segMaskRef}
+                    combo={combo}
+                    active={isAuraActive}
+                  />
+                )}
+
                 {/* Particle canvas — inside camera for clean clipping */}
                 {screen === 'PLAYING' && (
                   <ParticleCanvas ref={particleRef} />
