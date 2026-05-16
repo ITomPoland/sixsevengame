@@ -6,7 +6,6 @@ const MAX_CHARS = 6;
 const NameInput = ({ score, onSubmit }) => {
   const { t } = useLanguage();
   const [name, setName] = useState('');
-  const [consent, setConsent] = useState(false);
   const hiddenInputRef = useRef(null);
 
   // Auto-focus hidden input on mount to trigger mobile keyboard
@@ -32,13 +31,13 @@ const NameInput = ({ score, onSubmit }) => {
       } else if (e.key === 'Backspace') {
         setName((prev) => prev.slice(0, -1));
       } else if (e.key === 'Enter' && name.length > 0) {
-        onSubmit(name, consent);
+        onSubmit(name, true);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [name, consent, onSubmit]);
+  }, [name, onSubmit]);
 
   // Handle hidden input changes (mobile keyboard)
   const handleInputChange = (e) => {
@@ -49,13 +48,13 @@ const NameInput = ({ score, onSubmit }) => {
   const handleInputKeyDown = (e) => {
     if (e.key === 'Enter' && name.length > 0) {
       e.preventDefault();
-      onSubmit(name, consent);
+      onSubmit(name, true);
     }
   };
 
   const handleSubmit = () => {
     if (name.length > 0) {
-      onSubmit(name, consent);
+      onSubmit(name, true);
     }
   };
 
@@ -103,18 +102,6 @@ const NameInput = ({ score, onSubmit }) => {
         ))}
       </div>
       
-      <div className="consent-box">
-        <label className="consent-label">
-          <input 
-            type="checkbox" 
-            checked={consent}
-            onChange={(e) => setConsent(e.target.checked)}
-            className="consent-checkbox"
-          />
-          <span>{t('consentText')}</span>
-        </label>
-      </div>
-
       <button 
         className={`btn-primary arcade-btn`}
         onClick={handleSubmit}

@@ -17,6 +17,7 @@ import CircularTimer from './components/CircularTimer';
 import Preloader from './components/Preloader';
 import { check67Gesture } from './gameLogic';
 import useLeaderboard from './hooks/useLeaderboard';
+import { getDeviceTier } from './utils/devicePerformance';
 import useScrollLock from './hooks/useScrollLock';
 import useOdometerLayout from './hooks/useOdometerLayout';
 import useLanguage from './hooks/useLanguage';
@@ -51,6 +52,7 @@ function App() {
   const initialScreen = () => {
     const params = new URLSearchParams(window.location.search);
     if (params.has('cert') && params.has('score')) return 'CERT_ONLY';
+    if (params.get('admin') === '67adminxd') return 'ADMIN';
     return 'PRELOADING';
   };
   const [screen, setScreen] = useState(initialScreen);
@@ -86,6 +88,7 @@ function App() {
   // ── Preloaded resources ───────────────────────────────────
   const preloadedStreamRef = useRef(null);
   const preloadedLandmarkerRef = useRef(null);
+  const [resourcesReady, setResourcesReady] = useState(false);
 
   // ── Game state ────────────────────────────────────────────
   const [score, setScore] = useState(0);
@@ -99,6 +102,7 @@ function App() {
   const [playerName, setPlayerName] = useState('');
   const [showCertificate, setShowCertificate] = useState(false);
   const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState(null);
+  const [resetTimeLeft, setResetTimeLeft] = useState('');
 
   // ── Performance refs (avoid re-renders on every frame) ───
   const photoCapturedRef = useRef(false);
@@ -117,7 +121,7 @@ function App() {
   // Performance gate: only enable aura on capable hardware
   const isAuraCapable = useRef(
     typeof navigator !== 'undefined' &&
-    (navigator.hardwareConcurrency || 2) >= 4 &&
+    getDeviceTier() !== 'low' &&
     !window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
   // Throttle mask updates to ~15fps to avoid React re-render storm
@@ -158,6 +162,27 @@ function App() {
   useEffect(() => {
     screenRef.current = screen;
   }, [screen]);
+
+  // Leaderboard reset timer
+  useEffect(() => {
+    const updateTimer = () => {
+      const now = new Date();
+      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      const diffMs = tomorrow - now;
+
+      const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diffMs / 1000 / 60) % 60);
+      const seconds = Math.floor((diffMs / 1000) % 60);
+
+      setResetTimeLeft(
+        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+      );
+    };
+
+    updateTimer();
+    const intervalId = setInterval(updateTimer, 1000);
+    return () => clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     scoreRef.current = score;
@@ -282,7 +307,13 @@ function App() {
     if (particleRef.current) {
       const cx = 0.3 + Math.random() * 0.4; // 30-70% horizontal
       const cy = 0.3 + Math.random() * 0.4; // 30-70% vertical
-      const count = Math.min(pending * 4, 15); // Reduced cap for performance
+      
+      const tier = getDeviceTier();
+      let maxParticles = 15;
+      if (tier === 'medium') maxParticles = 8;
+      if (tier === 'low') maxParticles = 3;
+      
+      const count = Math.min(pending * 4, maxParticles);
       particleRef.current.emit(cx, cy, count);
     }
 
@@ -292,7 +323,7 @@ function App() {
     }
 
     // 3. Shockwave ring every SHOCKWAVE_INTERVAL points
-    if (newScore % SHOCKWAVE_INTERVAL === 0 && shockwaveRef.current) {
+    if (newScore % SHOCKWAVE_INTERVAL === 0 && shockwaveRef.current && getDeviceTier() !== 'low') {
       shockwaveRef.current.trigger();
     }
 
@@ -367,39 +398,17 @@ function App() {
     }, 600);
     
     try {
-      let photoUrl = null;
-      
-      // 1. Upload photo to ImgBB (key obfuscated to avoid GitHub bot scraping)
-      if (photoDataUrl) {
-        const apiKey = atob('NjNjYjdjYzlmYTYyYjg1NzY4MmJkOGMyZjFlZTE4YjM=');
-        const formData = new FormData();
-        const base64Data = photoDataUrl.split(',')[1];
-        formData.append('image', base64Data);
-        
-        const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-          method: 'POST',
-          body: formData
-        });
-        const data = await response.json();
-        
-        if (data.success) {
-          photoUrl = data.data.url;
-          setUploadedPhotoUrl(photoUrl);
-        }
-      }
-      
-      // 2. Save to global leaderboard (Firebase Realtime Database)
+      // Save to global leaderboard (Firebase Realtime Database)
       const newScoreRef = push(dbRef(database, 'leaderboard'));
       await set(newScoreRef, {
         name,
         score,
-        photoUrl: photoUrl || null,
         consentGiven: consent,
         timestamp: serverTimestamp()
       });
       
     } catch (e) {
-      console.error("Error saving score or uploading photo:", e);
+      console.error("Error saving score:", e);
     }
   };
 
@@ -466,6 +475,12 @@ function App() {
     setScreen('ADMIN');
   };
 
+  const handleResourcesLoaded = useCallback((stream, landmarker) => {
+    preloadedStreamRef.current = stream;
+    preloadedLandmarkerRef.current = landmarker;
+    setResourcesReady(true);
+  }, []);
+
   const handlePreloaderReady = useCallback((stream, landmarker) => {
     preloadedStreamRef.current = stream;
     preloadedLandmarkerRef.current = landmarker;
@@ -516,6 +531,7 @@ function App() {
       {/* Preloader Background and UI (renders underneath the global header) */}
       {isPreloading && (
         <Preloader 
+          onResourcesLoaded={handleResourcesLoaded}
           onReady={handlePreloaderReady} 
           onProgress={setPreloaderProgress}
           onExitStart={() => setIsPreloaderExiting(true)}
@@ -683,7 +699,12 @@ function App() {
               </div>
               {/* Leaderboard content — revealed by curtain */}
               <div className="odometer__content">
-                <h3 className="glow-text-small">{t('top5Today')}</h3>
+                <h3 className="glow-text-small" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{t('top5Today')}</span>
+                  <span style={{ fontSize: '0.6em', opacity: 0.8, fontWeight: 'normal' }}>
+                    {t('resetIn')} {resetTimeLeft}
+                  </span>
+                </h3>
                 <ul className="leaderboard-list">
                   {[...(leaderboard || []), ...Array(5)].slice(0, 5).map((entry, index) => (
                     <li key={index} className={`leaderboard-item ${!entry ? 'empty-slot' : ''}`}>
@@ -703,13 +724,6 @@ function App() {
       {screen === 'START' && (
         <div className={`start-footer ${isExitingStart ? 'is-exiting-fixed' : ''}`}>
           <CreatorBadge />
-          <button 
-            className="btn-secondary admin-btn"
-            onClick={handleAdminLogin}
-            title="Panel Administratora"
-          >
-            🔒 ADMIN
-          </button>
         </div>
       )}
 
@@ -830,6 +844,7 @@ function App() {
               
               <div className="camera-inner">
                 <CameraDetector 
+                  isActive={isGameplay}
                   onPoseUpdate={handlePoseUpdate}
                   onSegmentationMask={handleSegmentationMask}
                   preloadedStream={preloadedStreamRef.current}

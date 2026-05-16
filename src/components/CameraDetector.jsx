@@ -1,12 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
+import { getDeviceTier, getMediaPipeConfig } from '../utils/devicePerformance';
 
-export default function CameraDetector({ onPoseUpdate, onSegmentationMask, preloadedStream, preloadedLandmarker }) {
+export default function CameraDetector({ isActive, onPoseUpdate, onSegmentationMask, preloadedStream, preloadedLandmarker }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const poseLandmarkerRef = useRef(null);
   const requestRef = useRef(null);
+  const isActiveRef = useRef(isActive);
+  const hasWarmedUpRef = useRef(false);
+  
+  useEffect(() => {
+    isActiveRef.current = isActive;
+  }, [isActive]);
+
   // Smoothed positions for stable circle rendering (EMA)
   const smoothLeftRef = useRef({ x: 0.5, y: 0.5 });
   const smoothRightRef = useRef({ x: 0.5, y: 0.5 });
@@ -55,9 +63,12 @@ export default function CameraDetector({ onPoseUpdate, onSegmentationMask, prelo
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
         );
         
+        const tier = getDeviceTier();
+        const config = getMediaPipeConfig(tier);
+        
         const landmarker = await PoseLandmarker.createFromOptions(vision, {
           baseOptions: {
-            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",
+            modelAssetPath: config.modelPath,
             delegate: "GPU"
           },
           runningMode: "VIDEO",
@@ -65,7 +76,7 @@ export default function CameraDetector({ onPoseUpdate, onSegmentationMask, prelo
           minPoseDetectionConfidence: 0.3,
           minPosePresenceConfidence: 0.3,
           minTrackingConfidence: 0.3,
-          outputSegmentationMasks: true
+          outputSegmentationMasks: config.segmentation
         });
         
         if (!active) return;
@@ -79,11 +90,14 @@ export default function CameraDetector({ onPoseUpdate, onSegmentationMask, prelo
 
     const startCamera = async () => {
       try {
+        const tier = getDeviceTier();
+        const config = getMediaPipeConfig(tier);
+        
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: { 
             width: 640, 
             height: 480,
-            frameRate: { ideal: 60, min: 30 }
+            frameRate: { ideal: config.cameraFps, min: 30 }
           } 
         });
         if (videoRef.current) {
@@ -118,6 +132,12 @@ export default function CameraDetector({ onPoseUpdate, onSegmentationMask, prelo
     const poseLandmarker = poseLandmarkerRef.current;
 
     if (!video || !canvas || !poseLandmarker) return;
+
+    // Skip processing if not active, BUT allow exactly 1 frame to warm up the GPU shaders
+    if (!isActiveRef.current && hasWarmedUpRef.current) {
+      requestRef.current = requestAnimationFrame(predictWebcam);
+      return;
+    }
 
     let startTimeMs = performance.now();
     let results = null;
@@ -219,6 +239,10 @@ export default function CameraDetector({ onPoseUpdate, onSegmentationMask, prelo
        leftWrist && leftWrist.visibility > 0.4 ? leftWrist : null, 
        rightWrist && rightWrist.visibility > 0.4 ? rightWrist : null
     );
+
+    if (!hasWarmedUpRef.current) {
+      hasWarmedUpRef.current = true;
+    }
 
     requestRef.current = requestAnimationFrame(predictWebcam);
   };

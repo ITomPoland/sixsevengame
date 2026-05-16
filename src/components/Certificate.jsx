@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { jsPDF } from 'jspdf';
-import { QRCodeSVG } from 'qrcode.react';
 import { getRank } from './ProgressBar';
 import useLanguage from '../hooks/useLanguage';
 
@@ -8,7 +7,6 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
   const { t } = useLanguage();
   const canvasRef = useRef(null);
   const [certDataUrl, setCertDataUrl] = useState(null);
-  const [qrUrl, setQrUrl] = useState('');
 
   const getDate = () => {
     const d = new Date();
@@ -241,21 +239,6 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
     // Generate data URL
     const dataUrl = canvasRef.current.toDataURL('image/png');
     setCertDataUrl(dataUrl);
-
-    // Generate QR URL with short ImgBB link
-    try {
-      const host = window.location.host;
-      const protocol = window.location.protocol;
-      
-      let finalUrl = `${protocol}//${host}/?cert=${encodeURIComponent(name)}&score=${score}`;
-      if (uploadedPhotoUrl) {
-        finalUrl += `&img=${encodeURIComponent(uploadedPhotoUrl)}`;
-      }
-      
-      setQrUrl(finalUrl);
-    } catch {
-      setQrUrl(`67 GAME - ${name} - ${score} pkt`);
-    }
   };
 
   const downloadPDF = () => {
@@ -296,18 +279,6 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
               🖼️ {t('download')}
             </button>
           </div>
-
-          {qrUrl && (
-            <div className="cert-qr">
-              <p style={{ fontWeight: '800', fontSize: '1rem', margin: '0.5rem 0' }}>
-                {t('scanQr')}
-              </p>
-              <div className="qr-box">
-                <QRCodeSVG value={qrUrl} size={140} level="L"
-                  bgColor="#ffffff" fgColor="#111111" />
-              </div>
-            </div>
-          )}
         </div>
 
         <button className="btn-secondary" onClick={onClose}

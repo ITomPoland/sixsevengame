@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
 import useLanguage from '../hooks/useLanguage';
+import { getDeviceTier, getMediaPipeConfig } from '../utils/devicePerformance';
 
 const PHASES = [
   { key: 'init', label: 'INICJALIZACJA', percent: 10 },
@@ -18,10 +19,11 @@ const getDigits = (n) => {
   return [s[0], s[1], s[2]];
 };
 
-export default function Preloader({ onReady, onProgress, onExitStart }) {
+export default function Preloader({ onResourcesLoaded, onReady, onProgress, onExitStart }) {
   const [phase, setPhase] = useState('init');
   const [progress, setProgress] = useState(0);
   const [cameraState, setCameraState] = useState('pending');
+  const [cameraErrorType, setCameraErrorType] = useState('cameraRequired');
   const [isExiting, setIsExiting] = useState(false);
   const streamRef = useRef(null);
   const landmarkerRef = useRef(null);
@@ -61,9 +63,13 @@ export default function Preloader({ onReady, onProgress, onExitStart }) {
       );
 
       setPhase('model');
+      
+      const tier = getDeviceTier();
+      const config = getMediaPipeConfig(tier);
+      
       const landmarker = await PoseLandmarker.createFromOptions(vision, {
         baseOptions: {
-          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",
+          modelAssetPath: config.modelPath,
           delegate: "GPU"
         },
         runningMode: "VIDEO",
@@ -71,7 +77,7 @@ export default function Preloader({ onReady, onProgress, onExitStart }) {
         minPoseDetectionConfidence: 0.3,
         minPosePresenceConfidence: 0.3,
         minTrackingConfidence: 0.3,
-        outputSegmentationMasks: true
+        outputSegmentationMasks: config.segmentation
       });
       landmarkerRef.current = landmarker;
 
@@ -117,15 +123,22 @@ export default function Preloader({ onReady, onProgress, onExitStart }) {
   const initCamera = async () => {
     setPhase('camera_init');
     try {
+      const tier = getDeviceTier();
+      const config = getMediaPipeConfig(tier);
+      
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: 640,
           height: 480,
-          frameRate: { ideal: 60, min: 30 }
+          frameRate: { ideal: config.cameraFps, min: 30 }
         }
       });
       streamRef.current = stream;
       setCameraState('granted');
+
+      if (onResourcesLoaded) {
+        onResourcesLoaded(stream, landmarkerRef.current);
+      }
 
       setPhase('done');
       // Force progress to 100 instantly (skip interpolation)
@@ -139,9 +152,20 @@ export default function Preloader({ onReady, onProgress, onExitStart }) {
         setTimeout(() => {
           onReady(stream, landmarkerRef.current);
         }, 900);
-      }, 1500);
+      }, 2200);
     } catch (err) {
       console.error("Camera error:", err);
+      
+      let errorKey = 'cameraError';
+      if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        errorKey = 'cameraNotFound';
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        errorKey = 'cameraInUse';
+      } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        errorKey = 'cameraRequired';
+      }
+      
+      setCameraErrorType(errorKey);
       setCameraState('denied');
       setPhase('camera_ask');
     }
@@ -196,22 +220,24 @@ export default function Preloader({ onReady, onProgress, onExitStart }) {
             <div className="preloader__camera-icon">🚫</div>
             <h3 className="preloader__camera-title">{t('noCameraAccess')}</h3>
             <p className="preloader__camera-desc">
-              {t('cameraRequired')}
+              {t(cameraErrorType)}
             </p>
-            <div className="preloader__camera-steps">
-              <div className="preloader__step">
-                <span className="preloader__step-num">1</span>
-                {t('cameraStep1')}
+            {cameraErrorType === 'cameraRequired' && (
+              <div className="preloader__camera-steps">
+                <div className="preloader__step">
+                  <span className="preloader__step-num">1</span>
+                  {t('cameraStep1')}
+                </div>
+                <div className="preloader__step">
+                  <span className="preloader__step-num">2</span>
+                  {t('cameraStep2')}
+                </div>
+                <div className="preloader__step">
+                  <span className="preloader__step-num">3</span>
+                  {t('cameraStep3')}
+                </div>
               </div>
-              <div className="preloader__step">
-                <span className="preloader__step-num">2</span>
-                {t('cameraStep2')}
-              </div>
-              <div className="preloader__step">
-                <span className="preloader__step-num">3</span>
-                {t('cameraStep3')}
-              </div>
-            </div>
+            )}
             <button className="btn-primary preloader__camera-btn" onClick={requestCamera}>
               {t('tryAgain')}
             </button>
