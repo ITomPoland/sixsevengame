@@ -3,25 +3,25 @@ import { getRank, getNextRank } from '../components/ProgressBar';
 
 describe('getRank', () => {
   it('returns lowest rank for score 0', () => {
-    expect(getRank(0).label).toBe('Żółw 🐢');
+    expect(getRank(0).label).toBe('rank0');
   });
 
   it('returns correct rank at exact threshold', () => {
-    expect(getRank(20).label).toBe('Szybki Bill 🏃');
-    expect(getRank(45).label).toBe('Maszyna 🤖');
-    expect(getRank(70).label).toBe('Turbina 🌪️');
-    expect(getRank(100).label).toBe('Nadczłowiek ⚡');
-    expect(getRank(130).label).toBe('LEGENDA 67 👑');
+    expect(getRank(20).label).toBe('rank1');
+    expect(getRank(45).label).toBe('rank2');
+    expect(getRank(70).label).toBe('rank3');
+    expect(getRank(100).label).toBe('rank4');
+    expect(getRank(130).label).toBe('rank5');
   });
 
   it('returns correct rank between thresholds', () => {
-    expect(getRank(10).label).toBe('Żółw 🐢');
-    expect(getRank(30).label).toBe('Szybki Bill 🏃');
-    expect(getRank(60).label).toBe('Maszyna 🤖');
+    expect(getRank(10).label).toBe('rank0');
+    expect(getRank(30).label).toBe('rank1');
+    expect(getRank(60).label).toBe('rank2');
   });
 
   it('returns highest rank for very high score', () => {
-    expect(getRank(200).label).toBe('LEGENDA 67 👑');
+    expect(getRank(200).label).toBe('rank5');
   });
 
   it('returns rank color along with label', () => {
@@ -33,7 +33,7 @@ describe('getRank', () => {
 
 describe('getNextRank', () => {
   it('returns next rank for low score', () => {
-    expect(getNextRank(0).label).toBe('Szybki Bill 🏃');
+    expect(getNextRank(0).label).toBe('rank1');
     expect(getNextRank(0).min).toBe(20);
   });
 
@@ -43,7 +43,7 @@ describe('getNextRank', () => {
   });
 
   it('returns correct next rank between thresholds', () => {
-    expect(getNextRank(25).label).toBe('Maszyna 🤖');
-    expect(getNextRank(50).label).toBe('Turbina 🌪️');
+    expect(getNextRank(25).label).toBe('rank2');
+    expect(getNextRank(50).label).toBe('rank3');
   });
 });

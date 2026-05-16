@@ -19,6 +19,7 @@ import { check67Gesture } from './gameLogic';
 import useLeaderboard from './hooks/useLeaderboard';
 import useScrollLock from './hooks/useScrollLock';
 import useOdometerLayout from './hooks/useOdometerLayout';
+import useLanguage from './hooks/useLanguage';
 import './index.css';
 import { database } from './firebase';
 import { ref as dbRef, push, set, serverTimestamp } from 'firebase/database';
@@ -66,6 +67,7 @@ function App() {
   // ── Custom Hooks ──────────────────────────────────────────
   const leaderboard = useLeaderboard(MAX_LEADERBOARD_ENTRIES);
   const lockScrollForAnimation = useScrollLock(screen);
+  const { t } = useLanguage();
 
   // Odometer FLIP-lite refs
   const startCardRef = useRef(null);
@@ -528,28 +530,28 @@ function App() {
           <div className="marquee-face marquee-face--front">
             <div className="marquee-content">
               <div className="marquee-track">
-                <span>/// 67 GAME ///</span>
-                <span>ŁADOWANIE</span>
-                <span>/// ZAGRAJ TERAZ ///</span>
-                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
-                <span>/// 67 GAME ///</span>
-                <span>ŁADOWANIE</span>
-                <span>/// ZAGRAJ TERAZ ///</span>
-                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
-                <span>/// 67 GAME ///</span>
-                <span>ŁADOWANIE</span>
+                <span>/// {t('speedGame')} ///</span>
+                <span>{t('loading')}</span>
+                <span>/// {t('playNow')} ///</span>
+                <span>{t('testSpeed')}</span>
+                <span>/// {t('speedGame')} ///</span>
+                <span>{t('loading')}</span>
+                <span>/// {t('playNow')} ///</span>
+                <span>{t('testSpeed')}</span>
+                <span>/// {t('speedGame')} ///</span>
+                <span>{t('loading')}</span>
               </div>
               <div className="marquee-track" aria-hidden="true">
-                <span>/// 67 GAME ///</span>
-                <span>ŁADOWANIE</span>
-                <span>/// ZAGRAJ TERAZ ///</span>
-                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
-                <span>/// 67 GAME ///</span>
-                <span>ŁADOWANIE</span>
-                <span>/// ZAGRAJ TERAZ ///</span>
-                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
-                <span>/// 67 GAME ///</span>
-                <span>ŁADOWANIE</span>
+                <span>/// {t('speedGame')} ///</span>
+                <span>{t('loading')}</span>
+                <span>/// {t('playNow')} ///</span>
+                <span>{t('testSpeed')}</span>
+                <span>/// {t('speedGame')} ///</span>
+                <span>{t('loading')}</span>
+                <span>/// {t('playNow')} ///</span>
+                <span>{t('testSpeed')}</span>
+                <span>/// {t('speedGame')} ///</span>
+                <span>{t('loading')}</span>
               </div>
             </div>
           </div>
@@ -558,28 +560,28 @@ function App() {
           <div className="marquee-face marquee-face--bottom">
             <div className="marquee-content">
               <div className="marquee-track">
-                <span>/// 67 GAME ///</span>
-                <span>FESTIWAL NAUKI UO</span>
-                <span>/// ZAGRAJ TERAZ ///</span>
-                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
-                <span>/// 67 GAME ///</span>
-                <span>FESTIWAL NAUKI UO</span>
-                <span>/// ZAGRAJ TERAZ ///</span>
-                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
-                <span>/// 67 GAME ///</span>
-                <span>FESTIWAL NAUKI UO</span>
+                <span>/// {t('speedGame')} ///</span>
+                <span>{t('globalChallenge')}</span>
+                <span>/// {t('playNow')} ///</span>
+                <span>{t('testSpeed')}</span>
+                <span>/// {t('speedGame')} ///</span>
+                <span>{t('globalChallenge')}</span>
+                <span>/// {t('playNow')} ///</span>
+                <span>{t('testSpeed')}</span>
+                <span>/// {t('speedGame')} ///</span>
+                <span>{t('globalChallenge')}</span>
               </div>
               <div className="marquee-track" aria-hidden="true">
-                <span>/// 67 GAME ///</span>
-                <span>FESTIWAL NAUKI UO</span>
-                <span>/// ZAGRAJ TERAZ ///</span>
-                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
-                <span>/// 67 GAME ///</span>
-                <span>FESTIWAL NAUKI UO</span>
-                <span>/// ZAGRAJ TERAZ ///</span>
-                <span>SPRAWDŹ SWOJĄ SZYBKOŚĆ</span>
-                <span>/// 67 GAME ///</span>
-                <span>FESTIWAL NAUKI UO</span>
+                <span>/// {t('speedGame')} ///</span>
+                <span>{t('globalChallenge')}</span>
+                <span>/// {t('playNow')} ///</span>
+                <span>{t('testSpeed')}</span>
+                <span>/// {t('speedGame')} ///</span>
+                <span>{t('globalChallenge')}</span>
+                <span>/// {t('playNow')} ///</span>
+                <span>{t('testSpeed')}</span>
+                <span>/// {t('speedGame')} ///</span>
+                <span>{t('globalChallenge')}</span>
               </div>
             </div>
           </div>
@@ -598,7 +600,7 @@ function App() {
           {/* Label only visible on START (or during transition for accurate measurement) */}
           {(!isPreloading || isPreloaderExiting) && (
             <div className="hero-game-label-wrapper">
-              <span className="hero-game-label" ref={speedGameRef}>✦ SPEED GAME ✦</span>
+              <span className="hero-game-label" ref={speedGameRef}>✦ {t('speedGame')} ✦</span>
             </div>
           )}
         </header>
@@ -632,15 +634,15 @@ function App() {
               {/* Card content — revealed by curtain */}
               <div className="odometer__content">
                 <div className="card-header-editorial">
-                  <span className="card-overline">Festiwal Nauki UO</span>
-                  <h2 className="card-title">WYZWANIE "67"</h2>
+                  <span className="card-overline">{t('globalChallenge')}</span>
+                  <h2 className="card-title">{t('challenge67')}</h2>
                 </div>
-                <p>Sprawdź swoją szybkość! Masz 15 sekund, by wykonać jak najwięcej naprzemiennych wymachów rąk (lewa góra, prawa dół i na odwrót).</p>
+                <p>{t('instruction')}</p>
                 <div className="instruction-box" style={{marginBottom: '1.5rem'}}>
-                  <span className="icon">⚠️</span> Odsun się odrobinę, by kamera widziała Twoje ramiona!
+                  <span className="icon">⚠️</span> {t('warningCamera')}
                 </div>
                 <button className="btn-primary" onClick={handleStartGame}>
-                  ROZPOCZNIJ GRĘ
+                  {t('startGame')}
                 </button>
               </div>
             </div>
@@ -661,7 +663,7 @@ function App() {
               </div>
               {/* Speed game label — revealed by curtain */}
               <div className="odometer__content odometer__content--label">
-                <span>✦ SPEED GAME ✦</span>
+                <span>✦ {t('speedGame')} ✦</span>
               </div>
             </div>
             <div 
@@ -681,7 +683,7 @@ function App() {
               </div>
               {/* Leaderboard content — revealed by curtain */}
               <div className="odometer__content">
-                <h3 className="glow-text-small">🏆 TOP 5 DZISIAJ</h3>
+                <h3 className="glow-text-small">{t('top5Today')}</h3>
                 <ul className="leaderboard-list">
                   {[...(leaderboard || []), ...Array(5)].slice(0, 5).map((entry, index) => (
                     <li key={index} className={`leaderboard-item ${!entry ? 'empty-slot' : ''}`}>
@@ -729,16 +731,16 @@ function App() {
               {/* LEFT: State indicator — morphs between states */}
               <div className="stats-bar__left">
                 {screen === 'PLAYING' ? (
-                  <span className="live-dot" key="live">LIVE</span>
+                  <span className="live-dot" key="live">{t('live')}</span>
                 ) : screen === 'COUNTDOWN' ? (
                   <span className="stats-bar__state-label stats-bar__state-label--countdown" key="countdown">
                     <span className="stats-bar__pulse-icon">⏳</span>
-                    START
+                    {t('startHUD')}
                   </span>
                 ) : (
                   <span className="stats-bar__state-label stats-bar__state-label--calibration" key="calibration">
                     <span className="stats-bar__pulse-icon">🎯</span>
-                    KALIBRACJA
+                    {t('calibrationHUD')}
                   </span>
                 )}
               </div>
@@ -747,18 +749,18 @@ function App() {
               <div className="stats-bar__center">
                 {screen === 'PLAYING' ? (
                   <div className="stats-bar__value-group" key="score">
-                    <span className="stats-bar__value-label">WYNIK:</span>
+                    <span className="stats-bar__value-label">{t('scoreHUD')}</span>
                     <span className="stats-bar__value-box">
                       <span key={score} className="score-punch">{score}</span>
                     </span>
                   </div>
                 ) : screen === 'COUNTDOWN' ? (
                   <div className="stats-bar__value-group stats-bar__value-group--countdown" key="countdown">
-                    <span className="stats-bar__value-label">PRZYGOTUJ SIĘ</span>
+                    <span className="stats-bar__value-label">{t('prepareHUD')}</span>
                   </div>
                 ) : (
                   <div className="stats-bar__value-group" key="calibration">
-                    <span className="stats-bar__value-label">WYMACH:</span>
+                    <span className="stats-bar__value-label">{t('swingHUD')}</span>
                     <span className="stats-bar__value-box">
                       <span key={calibrationCount} className="score-punch">{calibrationCount}</span>
                     </span>
@@ -866,12 +868,12 @@ function App() {
                 
                 {showStartText && screen === 'PLAYING' && (
                   <div className="countdown-overlay" style={{ color: 'var(--neo-yellow)' }}>
-                    <span className="countdown-text">START!</span>
+                    <span className="countdown-text">{t('startText')}</span>
                   </div>
                 )}
                 {showEndText && screen === 'PLAYING' && (
                   <div className="countdown-overlay" style={{ color: 'var(--neo-pink)' }}>
-                    <span className="countdown-text">KONIEC!</span>
+                    <span className="countdown-text">{t('endText')}</span>
                   </div>
                 )}
               </div>
@@ -892,27 +894,27 @@ function App() {
 
         {screen === 'RESULT' && (
           <div className={`card text-center final-result-card ${isExitingResult ? 'is-exiting-result' : ''}`} key="result">
-            <h2 className="glow-text">Koniec czasu!</h2>
+            <h2 className="glow-text">{t('timeUp')}</h2>
             <div className="final-score">
-              Udało Ci się zrobić <br/>
+              {t('youDid')} <br/>
               <span className="huge-number">{score}</span> <br/>
-              powtórzeń!
+              {t('reps')}
             </div>
             
             <div className="rank-display" style={{ margin: '1rem 0', fontSize: '1.5rem', color: 'var(--secondary)' }}>
-              Ranga: <strong>{getRank(score).label}</strong>
+              {t('rank')} <strong>{getRank(score, t).label}</strong>
             </div>
 
             <div className="result-actions">
               <button className="btn-primary mt-4" onClick={() => setShowCertificate(true)}
                 style={{ background: 'var(--neo-green)' }}>
-                🏆 ZOBACZ CERTYFIKAT
+                {t('seeCertificate')}
               </button>
               <button className="btn-primary mt-4" onClick={restartGame}>
-                ZAGRAJ PONOWNIE
+                {t('playAgain')}
               </button>
               <button className="btn-secondary mt-4" onClick={goToMenu}>
-                MENU GŁÓWNE
+                {t('mainMenu')}
               </button>
             </div>
           </div>

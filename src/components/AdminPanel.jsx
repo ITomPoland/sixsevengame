@@ -3,8 +3,10 @@ import { database, auth } from '../firebase';
 import { ref as dbRef, onValue, remove } from 'firebase/database';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import Certificate from './Certificate';
+import useLanguage from '../hooks/useLanguage';
 
 const AdminPanel = ({ onBack }) => {
+  const { t } = useLanguage();
   const [entries, setEntries] = useState([]);
   const [selectedCert, setSelectedCert] = useState(null);
   const [user, setUser] = useState(null);
@@ -47,7 +49,7 @@ const AdminPanel = ({ onBack }) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
-      setLoginError('Nieprawidłowy email lub hasło.');
+      setLoginError(t('loginError'));
     }
   };
 
@@ -60,7 +62,7 @@ const AdminPanel = ({ onBack }) => {
   };
 
   const handleDelete = async (id, name) => {
-    if (window.confirm(`Czy na pewno chcesz usunąć wynik gracza: ${name}?`)) {
+    if (window.confirm(`${t('deleteConfirm')} ${name}?`)) {
       try {
         await remove(dbRef(database, `leaderboard/${id}`));
       } catch (error) {
@@ -78,16 +80,16 @@ const AdminPanel = ({ onBack }) => {
   return (
     <div className="admin-panel">
       <div className="admin-header">
-        <h2>Panel Administratora</h2>
+        <h2>{t('adminTitle')}</h2>
         <div>
           {user && <button className="btn-secondary" style={{ marginRight: '10px' }} onClick={handleLogout}>Wyloguj</button>}
-          <button className="btn-secondary" onClick={onBack}>Wróć do menu</button>
+          <button className="btn-secondary" onClick={onBack}>{t('backToMenu')}</button>
         </div>
       </div>
 
       {!user ? (
         <div style={{ maxWidth: '400px', margin: '4rem auto', textAlign: 'center' }}>
-          <h3>Zaloguj się</h3>
+          <h3>{t('login')}</h3>
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
             <input 
               type="email" 
@@ -99,14 +101,14 @@ const AdminPanel = ({ onBack }) => {
             />
             <input 
               type="password" 
-              placeholder="Hasło" 
+              placeholder={t('password')} 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={{ padding: '0.8rem', fontSize: '1.2rem', border: '3px solid var(--neo-black)', borderRadius: '8px' }}
               required 
             />
             {loginError && <div style={{ color: 'var(--neo-pink)', fontWeight: 'bold' }}>{loginError}</div>}
-            <button type="submit" className="btn-primary">Zaloguj</button>
+            <button type="submit" className="btn-primary">{t('login')}</button>
           </form>
         </div>
       ) : (
@@ -126,7 +128,7 @@ const AdminPanel = ({ onBack }) => {
           <tbody>
             {entries.length === 0 ? (
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Brak wpisów w bazie.</td>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>{t('noEntries')}</td>
               </tr>
             ) : (
               entries.map((entry, index) => (
@@ -152,16 +154,16 @@ const AdminPanel = ({ onBack }) => {
                         <img src={entry.photoUrl} alt={`Certyfikat ${entry.name}`} className="admin-photo-thumb" />
                       </div>
                     ) : (
-                      <span style={{ color: 'var(--text-secondary)' }}>Brak zdjęcia</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>{t('noPhoto')}</span>
                     )}
                   </td>
                   <td>
                     <button 
                       className="btn-delete"
                       onClick={() => handleDelete(entry.id, entry.name)}
-                      title="Usuń wpis"
+                      title={t('delete')}
                     >
-                      🗑️ Usuń
+                      🗑️ {t('delete')}
                     </button>
                   </td>
                 </tr>

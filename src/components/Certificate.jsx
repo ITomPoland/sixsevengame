@@ -2,8 +2,10 @@ import React, { useRef, useEffect, useState } from 'react';
 import { jsPDF } from 'jspdf';
 import { QRCodeSVG } from 'qrcode.react';
 import { getRank } from './ProgressBar';
+import useLanguage from '../hooks/useLanguage';
 
 const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) => {
+  const { t } = useLanguage();
   const canvasRef = useRef(null);
   const [certDataUrl, setCertDataUrl] = useState(null);
   const [qrUrl, setQrUrl] = useState('');
@@ -15,7 +17,7 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
 
   useEffect(() => {
     drawCertificate();
-  }, []);
+  }, [t, name, score]);
 
   const drawCertificate = () => {
     const canvas = canvasRef.current;
@@ -60,17 +62,17 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 28px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('/// FESTIWAL NAUKI UO 2026 /// 67 GAME /// CERTYFIKAT ///', W / 2, 100);
+    ctx.fillText(`/// ${t('globalChallenge')} /// ${t('speedGame')} /// ${t('certificateOf')} ///`, W / 2, 100);
 
     // Title
     ctx.fillStyle = '#111111';
     ctx.font = 'bold 64px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('CERTYFIKAT', W / 2, 210);
+    ctx.fillText(t('certificateOf').toUpperCase(), W / 2, 210);
 
     // Subtitle
     ctx.font = 'bold 28px "Space Grotesk", sans-serif';
-    ctx.fillText('UCZESTNICTWA W WYZWANIU "67"', W / 2, 250);
+    ctx.fillText(t('challenge67').toUpperCase(), W / 2, 250);
 
     // Decorative line
     ctx.fillStyle = '#d4ff00';
@@ -141,7 +143,7 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
   };
 
   const finishDraw = (ctx, W, H) => {
-    const rank = getRank(score).label;
+    const rank = getRank(score, t).label;
     const date = getDate();
 
     // Info section — right side
@@ -167,9 +169,9 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
     ctx.fillStyle = '#111111';
     ctx.font = 'bold 18px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('WYNIK', infoX + 170, 425);
+    ctx.fillText(t('scoreHUD').replace(':', '').toUpperCase(), infoX + 170, 425);
     ctx.font = 'bold 36px "Space Grotesk", sans-serif';
-    ctx.fillText(`${score} powtórzeń`, infoX + 170, 465);
+    ctx.fillText(`${score} ${t('reps')}`, infoX + 170, 465);
 
     // Rank box
     ctx.fillStyle = '#00e676';
@@ -180,7 +182,7 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
     ctx.fillStyle = '#111111';
     ctx.font = 'bold 18px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('RANGA', infoX + 525, 425);
+    ctx.fillText(t('rank').replace(':', '').toUpperCase(), infoX + 525, 425);
     ctx.font = 'bold 28px "Space Grotesk", sans-serif';
     ctx.fillText(rank, infoX + 525, 465);
 
@@ -193,7 +195,7 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
     ctx.fillStyle = '#111111';
     ctx.font = 'bold 22px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`Data: ${date}   •   Festiwal Nauki UO`, infoX + 345, 533);
+    ctx.fillText(`${date}   •   ${t('globalChallenge')}`, infoX + 345, 533);
 
     // Bottom banner
     ctx.fillStyle = '#111111';
@@ -205,7 +207,7 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
     ctx.fillStyle = '#d4ff00';
     ctx.font = 'bold 24px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('/// 67 GAME /// SPRAWDŹ SWOJĄ SZYBKOŚĆ /// FESTIWAL NAUKI UO 2026 ///', W / 2, H - 82);
+    ctx.fillText(`/// ${t('speedGame')} /// ${t('testSpeed')} /// ${t('globalChallenge')} ///`, W / 2, H - 82);
 
     // Decorative stickers
     ctx.save();
@@ -219,7 +221,7 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 20px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('67 GAME', 70, 28);
+    ctx.fillText(t('speedGame'), 70, 28);
     ctx.restore();
 
     ctx.save();
@@ -275,7 +277,7 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
     <div className="certificate-overlay">
       <div className="certificate-modal">
         <h2 className="glow-text" style={{ fontSize: '2rem', marginBottom: '1rem' }}>
-          🏆 TWÓJ CERTYFIKAT! 🏆
+          🏆 {t('certificateOf').toUpperCase()} 🏆
         </h2>
 
         <div className="cert-preview-wrapper">
@@ -288,17 +290,17 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
         <div className="cert-actions">
           <div className="cert-buttons">
             <button className="btn-primary" onClick={downloadPDF} style={{ fontSize: '1.1rem', padding: '0.8rem 2rem' }}>
-              📄 POBIERZ PDF
+              📄 PDF
             </button>
             <button className="btn-secondary" onClick={downloadImage} style={{ fontSize: '1.1rem', padding: '0.8rem 2rem' }}>
-              🖼️ POBIERZ PNG
+              🖼️ {t('download')}
             </button>
           </div>
 
           {qrUrl && (
             <div className="cert-qr">
               <p style={{ fontWeight: '800', fontSize: '1rem', margin: '0.5rem 0' }}>
-                📱 Zeskanuj QR kodem by zobaczyć certyfikat na telefonie:
+                {t('scanQr')}
               </p>
               <div className="qr-box">
                 <QRCodeSVG value={qrUrl} size={140} level="L"
@@ -310,7 +312,7 @@ const Certificate = ({ name, score, photoDataUrl, uploadedPhotoUrl, onClose }) =
 
         <button className="btn-secondary" onClick={onClose}
           style={{ marginTop: '1rem', fontSize: '1rem', padding: '0.6rem 1.5rem' }}>
-          ZAMKNIJ
+          {t('close')}
         </button>
       </div>
     </div>

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import useLanguage from '../hooks/useLanguage';
 
 const MAX_CHARS = 6;
 
 const NameInput = ({ score, onSubmit }) => {
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [consent, setConsent] = useState(false);
   const hiddenInputRef = useRef(null);
@@ -72,9 +74,9 @@ const NameInput = ({ score, onSubmit }) => {
 
   return (
     <div className="name-input-container">
-      <h2 className="glow-text" style={{ color: 'var(--neo-pink)' }}>KONIEC!</h2>
-      <p className="subtitle" style={{ fontSize: '2rem', fontWeight: '800' }}>Twój wynik: <strong>{score}</strong></p>
-      <p className="instruction">Wpisz swój nick aby odebrać certyfikat:</p>
+      <h2 className="glow-text" style={{ color: 'var(--neo-pink)' }}>{t('endText')}</h2>
+      <p className="subtitle" style={{ fontSize: '2rem', fontWeight: '800' }}>{t('yourScore')} <strong>{score}</strong></p>
+      <p className="instruction">{t('enterNick')}</p>
       
       {/* Hidden input for mobile keyboard trigger */}
       <input
@@ -90,7 +92,7 @@ const NameInput = ({ score, onSubmit }) => {
         onChange={handleInputChange}
         onKeyDown={handleInputKeyDown}
         className="name-hidden-input"
-        aria-label="Wpisz nick"
+        aria-label={t('nickname')}
       />
 
       <div className="arcade-input" onClick={handleSlotsClick}>
@@ -109,7 +111,7 @@ const NameInput = ({ score, onSubmit }) => {
             onChange={(e) => setConsent(e.target.checked)}
             className="consent-checkbox"
           />
-          <span>Zgadzam się na publikację mojego wyniku oraz pamiątkowego zdjęcia na profilach społecznościowych twórców (np. LinkedIn) w celach promocyjnych.</span>
+          <span>{t('consentText')}</span>
         </label>
       </div>
 
@@ -119,7 +121,7 @@ const NameInput = ({ score, onSubmit }) => {
         disabled={name.length === 0}
         style={{ marginTop: '1rem', background: 'var(--neo-pink)' }}
       >
-        ZAPISZ
+        {t('saveScore')}
       </button>
     </div>
   );

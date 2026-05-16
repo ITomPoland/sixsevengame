@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
+import useLanguage from '../hooks/useLanguage';
 
 const PHASES = [
   { key: 'init', label: 'INICJALIZACJA', percent: 10 },
@@ -25,6 +26,7 @@ export default function Preloader({ onReady, onProgress, onExitStart }) {
   const streamRef = useRef(null);
   const landmarkerRef = useRef(null);
   const hasStarted = useRef(false);
+  const { t } = useLanguage();
 
 
   // Smooth progress animation
@@ -174,13 +176,13 @@ export default function Preloader({ onReady, onProgress, onExitStart }) {
         <div className="camera-modal-overlay">
           <div className="preloader__camera-card" key="camera-prompt">
             <div className="preloader__camera-icon">📸</div>
-            <h3 className="preloader__camera-title">POTRZEBUJEMY KAMERY!</h3>
+            <h3 className="preloader__camera-title">{t('cameraAccess')}</h3>
             <p className="preloader__camera-desc">
-              Gra 67 używa kamery do wykrywania ruchów rąk.
-              <br />Twoje nagranie nie jest nigdzie wysyłane.
+              {t('preloaderDesc1')}
+              <br />{t('preloaderDesc2')}
             </p>
             <button className="btn-primary preloader__camera-btn" onClick={requestCamera}>
-              WŁĄCZ KAMERĘ
+              {t('turnOnCamera')}
             </button>
           </div>
         </div>,
@@ -192,26 +194,26 @@ export default function Preloader({ onReady, onProgress, onExitStart }) {
         <div className="camera-modal-overlay">
           <div className="preloader__camera-card preloader__camera-card--denied" key="camera-denied">
             <div className="preloader__camera-icon">🚫</div>
-            <h3 className="preloader__camera-title">BRAK DOSTĘPU DO KAMERY</h3>
+            <h3 className="preloader__camera-title">{t('noCameraAccess')}</h3>
             <p className="preloader__camera-desc">
-              Kamera jest wymagana do gry. Aby włączyć dostęp:
+              {t('cameraRequired')}
             </p>
             <div className="preloader__camera-steps">
               <div className="preloader__step">
                 <span className="preloader__step-num">1</span>
-                Kliknij ikonę 🔒 w pasku adresu
+                {t('cameraStep1')}
               </div>
               <div className="preloader__step">
                 <span className="preloader__step-num">2</span>
-                Znajdź "Kamera" i zmień na "Zezwalaj"
+                {t('cameraStep2')}
               </div>
               <div className="preloader__step">
                 <span className="preloader__step-num">3</span>
-                Odśwież stronę
+                {t('cameraStep3')}
               </div>
             </div>
             <button className="btn-primary preloader__camera-btn" onClick={requestCamera}>
-              SPRÓBUJ PONOWNIE
+              {t('tryAgain')}
             </button>
           </div>
         </div>,
